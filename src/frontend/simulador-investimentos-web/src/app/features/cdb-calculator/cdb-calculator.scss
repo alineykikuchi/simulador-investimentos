@@ -1,0 +1,10 @@
+.calculator {
+  display: grid;
+  gap: 1rem;
+  max-width: 28rem;
+
+  form {
+    display: grid;
+    gap: 0.5rem;
+  }
+}

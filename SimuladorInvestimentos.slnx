@@ -1,0 +1,26 @@
+<Solution>
+
+  <Folder Name="/solution-items/">
+    <File Path="README.md" />
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Packages.props" />
+    <File Path="global.json" />
+    <File Path=".editorconfig" />
+    <File Path="coverage.runsettings" />
+  </Folder>
+
+  <Folder Name="/src/">
+    <Project Path="src/backend/SimuladorInvestimentos.Domain/SimuladorInvestimentos.Domain.csproj" />
+    <Project Path="src/backend/SimuladorInvestimentos.Application/SimuladorInvestimentos.Application.csproj" />
+    <Project Path="src/backend/SimuladorInvestimentos.Api/SimuladorInvestimentos.Api.csproj" />
+    <Project Path="src/frontend/simulador-investimentos-web/simulador-investimentos-web.esproj">
+      <!-- O front é gerenciado pelo Angular CLI; o build da solução não o compila. -->
+      <Build Solution="*|*" Project="false" />
+    </Project>
+  </Folder>
+
+  <Folder Name="/tests/">
+    <Project Path="tests/SimuladorInvestimentos.Domain.Tests/SimuladorInvestimentos.Domain.Tests.csproj" />
+  </Folder>
+
+</Solution>

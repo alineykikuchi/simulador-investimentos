@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>SimuladorInvestimentos.Domain</RootNamespace>
+  </PropertyGroup>
+
+  <!-- Camada de domínio: sem dependências de infraestrutura ou framework web. -->
+
+</Project>

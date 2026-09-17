@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>SimuladorInvestimentos.Application</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SimuladorInvestimentos.Domain\SimuladorInvestimentos.Domain.csproj" />
+  </ItemGroup>
+
+</Project>

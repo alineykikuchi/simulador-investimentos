@@ -1,0 +1,7 @@
+# Normaliza tudo para LF no repositório e no diretório de trabalho, independente
+# do core.autocrlf de cada máquina.
+* text=auto eol=lf
+
+# Binários: nunca converter.
+*.ico binary
+*.png binary
