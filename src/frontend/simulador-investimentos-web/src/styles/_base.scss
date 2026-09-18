@@ -1,0 +1,42 @@
+// Base global (spec §4.4). Sem regra de layout aqui: o layout da página é do `App`.
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+:root {
+  // Sem tema escuro desenhado: `light dark` faria o navegador escurecer controles nativos.
+  color-scheme: light;
+}
+
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  font-variant-numeric: tabular-nums;
+}
+
+// Foco visível — nunca `outline: none` sem substituto.
+input:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+button:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+// Remove os spinners nativos de campos numéricos.
+input[type='number'] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+input[type='number']::-webkit-outer-spin-button,
+input[type='number']::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
