@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using SimuladorInvestimentos.Domain.Common.Exceptions;
 
-namespace SimuladorInvestimentos.Api.Extensions;
+namespace SimuladorInvestimentos.Api.ExceptionHandling;
 
 /// <summary>
 /// Traduz violações de regra de negócio (<see cref="DomainException"/>) em HTTP 400

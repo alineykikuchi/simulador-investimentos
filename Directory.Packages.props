@@ -8,6 +8,8 @@
     <GlobalPackageReference Include="SonarAnalyzer.CSharp" Version="10.15.0.120848" />
   </ItemGroup>
   <ItemGroup>
+    <!-- Application -->
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.12" />
     <!-- API -->
     <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="10.0.12" />
     <!-- Testes -->

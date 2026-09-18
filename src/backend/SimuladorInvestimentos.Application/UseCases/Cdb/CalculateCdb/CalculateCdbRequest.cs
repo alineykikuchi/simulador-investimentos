@@ -1,4 +1,4 @@
-namespace SimuladorInvestimentos.Application.Cdb;
+namespace SimuladorInvestimentos.Application.UseCases.Cdb.CalculateCdb;
 
 /// <summary>
 /// Dados informados na tela (item 1 da especificação).

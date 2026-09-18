@@ -1,4 +1,4 @@
-namespace SimuladorInvestimentos.Application.Cdb;
+namespace SimuladorInvestimentos.Application.UseCases.Cdb.CalculateCdb;
 
 /// <summary>
 /// Caso de uso "calcular investimento em CDB": valida a entrada construindo os objetos de

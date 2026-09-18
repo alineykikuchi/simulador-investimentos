@@ -1,4 +1,4 @@
-namespace SimuladorInvestimentos.Application.Cdb;
+namespace SimuladorInvestimentos.Application.UseCases.Cdb.CalculateCdb;
 
 /// <summary>
 /// Resultado apresentado na tela: bruto e líquido (os demais campos são informativos).

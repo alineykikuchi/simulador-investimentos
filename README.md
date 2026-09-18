@@ -106,16 +106,16 @@ npm run test:coverage   # com relatório de cobertura
 
 ## Arquitetura
 
-Clean architecture / DDD tático, com o domínio no centro e dependências apontando para
-dentro:
+Clean Architecture simplificada em três projetos, com o domínio no centro e a regra de
+dependência `Api → Application → Domain` (o domínio não referencia nada):
 
 ```
 simulador-investimentos-web (Angular)
             │ HTTP
             ▼
 SimuladorInvestimentos.Api  ──▶  SimuladorInvestimentos.Application  ──▶  SimuladorInvestimentos.Domain
-(endpoints, DI, CORS,            (casos de uso, DTOs)                     (objetos de valor,
- ProblemDetails)                                                          políticas, cálculo)
+(endpoints, adapters, DI,        (casos de uso, DTOs, DI)                 (objetos de valor,
+ CORS, ProblemDetails)                                                    políticas, cálculo)
 ```
 
 | Camada                        | Responsabilidade                                                              |
@@ -124,6 +124,72 @@ SimuladorInvestimentos.Api  ──▶  SimuladorInvestimentos.Application  ─�
 | `Application`                 | orquestra o caso de uso e expõe o contrato da API (DTOs)                       |
 | `Api`                         | transporte: rotas, serialização, CORS, tradução de erro de domínio em HTTP 400 |
 | `simulador-investimentos-web` | apresentação: formulário, chamada HTTP e exibição do bruto/líquido             |
+
+### Estrutura de pastas
+
+O namespace espelha a pasta. O que está marcado como **planejado** ainda não existe no
+repositório — nenhuma pasta nasce vazia; cada uma entra junto com o seu primeiro arquivo.
+
+```
+src/backend/
+├── SimuladorInvestimentos.Domain/
+│   ├── Common/                                  vale para qualquer título de renda fixa
+│   │   ├── Exceptions/DomainException.cs
+│   │   ├── Tax/IIncomeTaxPolicy.cs              RegressiveIncomeTaxPolicy: planejado
+│   │   └── ValueObjects/                        InvestmentAmount, InvestmentTerm
+│   └── Cdb/                                     específico do CDB
+│       ├── Ports/ICdbRatesProvider.cs
+│       ├── Services/ICdbCalculator.cs           CompoundCdbCalculator: planejado
+│       └── ValueObjects/                        CdbRates, CdbCalculation
+│
+├── SimuladorInvestimentos.Application/
+│   ├── UseCases/
+│   │   └── Cdb/
+│   │       └── CalculateCdb/
+│   │           ├── CalculateCdbRequest.cs
+│   │           ├── CalculateCdbResponse.cs      mapeamento domínio → resposta (método estático)
+│   │           ├── ICalculateCdbUseCase.cs      contrato que o endpoint consome
+│   │           └── CalculateCdbUseCase.cs       planejado
+│   └── DependencyInjection.cs                   AddApplication()
+│
+└── SimuladorInvestimentos.Api/
+    ├── Adapters/                                planejado: ConfigurationCdbRatesProvider, CdbRatesOptions
+    ├── Endpoints/                               planejado: CdbEndpoints.cs, MapGroup("/api/v1/cdb")
+    ├── ExceptionHandling/
+    │   └── DomainExceptionHandler.cs            DomainException → HTTP 400 + ProblemDetails
+    ├── DependencyInjection.cs                   AddApi(configuration)
+    └── Program.cs                               só bootstrap: AddApplication(), AddApi() e o pipeline
+```
+
+Convenções que sustentam essa árvore:
+
+- **Regra de dependência:** `Api → Application → Domain`. Exceções nascem no `Domain`; quem
+  as traduz para HTTP é a `Api` (`ExceptionHandling/`). `Application` não referencia
+  ASP.NET nem `IConfiguration`.
+- **Um caso de uso, uma pasta:** `UseCases/<Recurso>/<Nome>/` com `<Nome>Request`,
+  `<Nome>Response`, `I<Nome>UseCase` (contrato que o endpoint consome) e `<Nome>UseCase`
+  (implementação). O mapeamento domínio → `Response` é um método estático no `Response`.
+  Não há validator nem mapper por caso de uso: a validação de entrada já acontece nos
+  objetos de valor do domínio.
+- **`Commands/` e `Queries/`** só entram quando um recurso tiver os dois tipos de operação.
+- **`Api/Endpoints/`** recebe um arquivo por recurso (`CdbEndpoints.cs`) com
+  `MapGroup("/api/v1/cdb")`.
+- **`Api/Adapters/`** recebe as implementações das portas do domínio
+  (`ConfigurationCdbRatesProvider`, `CdbRatesOptions`). Vira um projeto `Infrastructure`
+  quando houver um segundo adapter com peso próprio.
+- **`Api/ExceptionHandling/`** é o lugar dos `IExceptionHandler`.
+
+### Como adicionar um novo título
+
+Um título novo (LCI, LCA, Tesouro Direto) entra como pasta irmã em três lugares,
+reaproveitando `Domain/Common/`:
+
+1. `Domain/<Titulo>/` — `ValueObjects/`, `Services/` e `Ports/` do produto;
+2. `Application/UseCases/<Titulo>/<Nome>/` — o kit do caso de uso (Request, Response,
+   interface e implementação);
+3. `Api/Endpoints/<Titulo>Endpoints.cs` — `MapGroup("/api/v1/<titulo>")`.
+
+Nada em `Domain/Common/` ou em `Domain/Cdb/` precisa mudar.
 
 ### Diagrama de classes (domínio e políticas)
 
@@ -175,20 +241,24 @@ classDiagram
     }
 
     class CompoundCdbCalculator {
-        <<a implementar>>
+        <<planejado>>
         +Calculate(InvestmentAmount, InvestmentTerm) CdbCalculation
     }
     class RegressiveIncomeTaxPolicy {
-        <<a implementar>>
+        <<planejado>>
         +GetRate(InvestmentTerm) decimal
     }
     class ConfigurationCdbRatesProvider {
-        <<a implementar>>
+        <<planejado>>
         +GetCurrent() CdbRates
     }
 
     class ICalculateCdbUseCase {
         <<interface>>
+        +Execute(CalculateCdbRequest) CalculateCdbResponse
+    }
+    class CalculateCdbUseCase {
+        <<planejado>>
         +Execute(CalculateCdbRequest) CalculateCdbResponse
     }
     class CalculateCdbRequest {
@@ -207,6 +277,7 @@ classDiagram
     ICdbCalculator <|.. CompoundCdbCalculator
     IIncomeTaxPolicy <|.. RegressiveIncomeTaxPolicy
     ICdbRatesProvider <|.. ConfigurationCdbRatesProvider
+    ICalculateCdbUseCase <|.. CalculateCdbUseCase
 
     CompoundCdbCalculator --> IIncomeTaxPolicy : politica de IR
     CompoundCdbCalculator --> ICdbRatesProvider : taxas vigentes
@@ -216,7 +287,7 @@ classDiagram
     ICdbRatesProvider ..> CdbRates : fornece
     ICalculateCdbUseCase ..> CalculateCdbRequest : recebe
     ICalculateCdbUseCase ..> CalculateCdbResponse : devolve
-    ICalculateCdbUseCase ..> ICdbCalculator : delega
+    CalculateCdbUseCase --> ICdbCalculator : delega
     InvestmentAmount ..> DomainException : lanca se invalido
     InvestmentTerm ..> DomainException : lanca se invalido
     CdbRates ..> DomainException : lanca se invalido
