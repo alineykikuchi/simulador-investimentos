@@ -1,0 +1,15 @@
+[
+  {
+    "Name": "API + Web",
+    "Projects": [
+      {
+        "Path": "src\\backend\\SimuladorInvestimentos.Api\\SimuladorInvestimentos.Api.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "src\\frontend\\simulador-investimentos-web\\simulador-investimentos-web.esproj",
+        "Action": "Start"
+      }
+    ]
+  }
+]
