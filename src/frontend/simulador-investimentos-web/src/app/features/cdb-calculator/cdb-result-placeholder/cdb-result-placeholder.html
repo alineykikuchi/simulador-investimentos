@@ -1,0 +1,38 @@
+<div class="placeholder" [class.placeholder--error]="isError()">
+  @if (isError()) {
+    <svg
+      class="placeholder__icon"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.6"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 8v5" />
+      <path d="M12 16.5v.5" />
+    </svg>
+  } @else {
+    <svg
+      class="placeholder__icon"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.6"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <rect x="3" y="4" width="18" height="16" rx="2" />
+      <path d="M7 15 L10 11 L13 13 L17 8" />
+    </svg>
+  }
+  <h2 id="titulo-resultado" class="placeholder__title">{{ title() }}</h2>
+  @if (text()) {
+    <p class="placeholder__text">{{ text() }}</p>
+  }
+</div>

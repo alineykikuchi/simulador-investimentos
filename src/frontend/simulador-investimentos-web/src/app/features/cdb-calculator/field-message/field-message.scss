@@ -1,0 +1,23 @@
+// Ajuda ou erro de campo. Um único elemento; só a cor e o ícone mudam.
+:host {
+  display: block;
+}
+
+.message {
+  margin: 0;
+  font-size: 0.8125rem; // 13 px
+  color: var(--color-text-subtle);
+}
+
+.message--error {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  color: var(--color-danger);
+}
+
+.message__icon {
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+}

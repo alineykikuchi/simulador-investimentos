@@ -10,9 +10,8 @@ Solução única (`SimuladorInvestimentos.slnx`) com:
 
 Sem banco de dados nesta versão.
 
-> **Estado: esqueleto.** A estrutura, os contratos, os objetos de valor e a esteira de
-> qualidade estão prontos e compilando; o cálculo em si e o endpoint estão marcados como
-> `TODO` no código.
+> **Escopo desta versão:** cálculo de CDB pela API (`POST /api/v1/cdb/calculations`) e tela
+> que o consome; taxas fixas em configuração e sem persistência.
 
 ## Regras de negócio
 
@@ -40,6 +39,11 @@ Imposto de renda sobre o **rendimento**, pela tabela regressiva:
 Entradas válidas: valor monetário **positivo** (até 2 casas decimais) e prazo em meses
 **maior que 1**.
 
+Arredondamento: o cálculo roda em `decimal` sem arredondar; bruto e imposto são arredondados
+a 2 casas (`MidpointRounding.AwayFromZero`) só na resposta, e o líquido é bruto − imposto já
+arredondados, para que os três valores fechem na tela. A alíquota sai como decimal (`0.2`),
+sem arredondamento.
+
 ## Pré-requisitos
 
 | Ferramenta                          | Versão                                   |
@@ -59,7 +63,26 @@ dotnet run --project src/backend/SimuladorInvestimentos.Api --launch-profile htt
 
 - API: `http://localhost:5080`
 - Health check: `http://localhost:5080/health`
+- Cálculo: `POST http://localhost:5080/api/v1/cdb/calculations`
 - Contrato OpenAPI (ambiente Development): `http://localhost:5080/openapi/v1.json`
+- Interface de referência da API (Scalar, ambiente Development): `http://localhost:5080/scalar`
+
+Exemplo de chamada (R$ 10.000 por 12 meses):
+
+```bash
+curl -s -X POST http://localhost:5080/api/v1/cdb/calculations \
+  -H "Content-Type: application/json" \
+  -d '{ "initialAmount": 10000, "months": 12 }'
+```
+
+```json
+{ "grossAmount": 11230.82, "netAmount": 10984.66, "incomeTaxRate": 0.20, "incomeTaxAmount": 246.16 }
+```
+
+Entrada inválida (valor ≤ 0, mais de 2 casas decimais ou prazo ≤ 1) responde `400` com
+`ProblemDetails` (`title: "Requisição inválida"`, `detail` com a mensagem do domínio). JSON
+malformado ou tipo errado também responde `400`, sem `detail`. As mesmas requisições estão em
+`src/backend/SimuladorInvestimentos.Api/SimuladorInvestimentos.Api.http` para rodar da IDE.
 
 ### Frontend (Angular)
 
@@ -74,48 +97,82 @@ Tela em `http://localhost:4200`. O `proxy.conf.json` encaminha `/api` para
 
 ### No Visual Studio
 
-Abra `SimuladorInvestimentos.slnx`, defina `SimuladorInvestimentos.Api` como projeto de
-inicialização e rode; suba o front pelo `.esproj` (F5 executa `npm start`) ou pelo
-terminal. O build da solução **não** compila o front (`ShouldRunBuildScript=false`) para
-não deixar o `dotnet build` dependente do npm.
+Abra `SimuladorInvestimentos.slnx` e, na lista de inicialização da barra de ferramentas,
+escolha o perfil **API + Web** (vem de `SimuladorInvestimentos.slnLaunch.user`, versionado
+de propósito). F5 sobe a API com depurador e o dev-server do Angular sem depurador, e abre
+`http://localhost:4200` no navegador definido em `src/frontend/.../launch.json` (Edge por
+padrão; troque para "localhost (Chrome)" na lista de depuradores do `.esproj`).
+
+Para subir só um dos lados, defina `SimuladorInvestimentos.Api` ou o `.esproj` como projeto
+de inicialização. O build da solução **não** compila o front (`ShouldRunBuildScript=false`)
+para não deixar o `dotnet build` dependente do npm.
+
+Se aparecer *"Unable to launch the previously selected debugger"*, feche o VS, apague a
+pasta `.vs` na raiz (é cache local) e abra a solução de novo.
 
 ## Como testar
 
 ### Backend + cobertura
 
 ```bash
-dotnet test SimuladorInvestimentos.slnx --settings coverage.runsettings --collect "XPlat Code Coverage"
+dotnet test SimuladorInvestimentos.slnx
 ```
 
-O `coverage.runsettings` restringe a medição a `SimuladorInvestimentos.Domain` e
-`SimuladorInvestimentos.Application` (critério de aceite: **acima de 90% na camada
-lógica**). Para o relatório em HTML:
+Dois projetos de teste (xUnit v3), um por camada lógica:
+
+| Projeto                                   | Cobre                                                        | Testes |
+| ----------------------------------------- | ------------------------------------------------------------ | ------ |
+| `tests/SimuladorInvestimentos.Domain.Tests`      | objetos de valor, `RegressiveIncomeTaxPolicy`, `CompoundCdbCalculator` | 43 |
+| `tests/SimuladorInvestimentos.Application.Tests` | `CalculateCdbUseCase`, `CalculateCdbResponse.From` (arredondamento) | 17 |
+
+Os dois usam a mesma massa de referência (8 vetores de valor/prazo com os quatro campos
+esperados na resposta) e um fake próprio de `ICdbRatesProvider` em `Support/`, sem biblioteca
+de mock.
+
+A cobertura é coletada automaticamente pelo `coverlet.msbuild`, configurado em
+`Directory.Build.targets` para todo projeto com `IsTestProject=true`. A medição fica
+restrita a `SimuladorInvestimentos.Domain` e `SimuladorInvestimentos.Application`, e o
+**quality gate roda no próprio build**: abaixo de **90% de linhas** na camada lógica o
+`dotnet test` falha, sem depender de um servidor Sonar.
+
+Cobertura de linhas atual: **84,41%** no `Domain` e **75%** na `Application`. Os 60 testes
+passam, mas como os dois valores ficam abaixo do limiar, o `dotnet test` termina com erro de
+cobertura. O caso de uso e o mapeamento da resposta estão em 100%; o que falta cobrir é o
+registro de dependências (`AddApplication()`) e parte dos objetos de valor.
+O relatório `coverage.cobertura.xml` sai em `TestResults/<projeto de teste>/`. Para
+gerar o HTML:
 
 ```bash
 dotnet tool install --global dotnet-reportgenerator-globaltool
-reportgenerator -reports:**/coverage.cobertura.xml -targetdir:coverage-report -reporttypes:Html
+reportgenerator -reports:TestResults/**/coverage.cobertura.xml -targetdir:coverage-report -reporttypes:Html
 ```
 
-### Frontend (stretch)
+Para uma rodada sem cobertura (mais rápida, sem o gate): `dotnet test /p:CollectCoverage=false`.
+
+### Frontend
 
 ```bash
 cd src/frontend/simulador-investimentos-web
-npm run test:ci        # Vitest, uma execução
+npm run test:ci         # Vitest, uma execução (82 specs em 10 arquivos)
 npm run test:coverage   # com relatório de cobertura
+npm run e2e             # Playwright; sobe o ng serve se a porta 4200 estiver livre
 ```
+
+Estrutura do front e detalhes dos testes E2E em
+`src/frontend/simulador-investimentos-web/README.md`.
 
 ## Arquitetura
 
-Clean architecture / DDD tático, com o domínio no centro e dependências apontando para
-dentro:
+Clean Architecture simplificada em três projetos, com o domínio no centro e a regra de
+dependência `Api → Application → Domain` (o domínio não referencia nada):
 
 ```
 simulador-investimentos-web (Angular)
             │ HTTP
             ▼
 SimuladorInvestimentos.Api  ──▶  SimuladorInvestimentos.Application  ──▶  SimuladorInvestimentos.Domain
-(endpoints, DI, CORS,            (casos de uso, DTOs)                     (objetos de valor,
- ProblemDetails)                                                          políticas, cálculo)
+(endpoints, adapters, DI,        (casos de uso, DTOs, DI)                 (objetos de valor,
+ CORS, ProblemDetails)                                                    políticas, cálculo)
 ```
 
 | Camada                        | Responsabilidade                                                              |
@@ -125,7 +182,78 @@ SimuladorInvestimentos.Api  ──▶  SimuladorInvestimentos.Application  ─�
 | `Api`                         | transporte: rotas, serialização, CORS, tradução de erro de domínio em HTTP 400 |
 | `simulador-investimentos-web` | apresentação: formulário, chamada HTTP e exibição do bruto/líquido             |
 
-### Diagrama de classes (domínio e políticas)
+### Estrutura de pastas
+
+O namespace espelha a pasta. Nenhuma pasta nasce vazia; cada uma entra junto com o seu
+primeiro arquivo.
+
+```
+src/backend/
+├── SimuladorInvestimentos.Domain/
+│   ├── Common/                                  vale para qualquer título de renda fixa
+│   │   ├── Exceptions/DomainException.cs
+│   │   ├── Tax/                                 IIncomeTaxPolicy, RegressiveIncomeTaxPolicy (tabela regressiva)
+│   │   └── ValueObjects/                        InvestmentAmount, InvestmentTerm
+│   └── Cdb/                                     específico do CDB
+│       ├── Ports/ICdbRatesProvider.cs
+│       ├── Services/                            ICdbCalculator, CompoundCdbCalculator (juros mês a mês + IR)
+│       └── ValueObjects/                        CdbRates, CdbCalculation
+│
+├── SimuladorInvestimentos.Application/
+│   ├── UseCases/
+│   │   └── Cdb/
+│   │       └── CalculateCdb/
+│   │           ├── CalculateCdbRequest.cs
+│   │           ├── CalculateCdbResponse.cs      From(CdbCalculation): mapeamento + arredondamento a 2 casas
+│   │           ├── ICalculateCdbUseCase.cs      contrato que o endpoint consome
+│   │           └── CalculateCdbUseCase.cs       cria os objetos de valor e delega a ICdbCalculator
+│   └── DependencyInjection.cs                   AddApplication(): política, calculadora e caso de uso
+│
+└── SimuladorInvestimentos.Api/
+    ├── Adapters/                                CdbRatesOptions (bind de "CdbRates"), ConfigurationCdbRatesProvider
+    ├── Endpoints/CdbEndpoints.cs                MapGroup("/api/v1/cdb") + POST /calculations
+    ├── ExceptionHandling/
+    │   └── DomainExceptionHandler.cs            DomainException → HTTP 400 + ProblemDetails
+    ├── DependencyInjection.cs                   AddApi(configuration): ProblemDetails, OpenAPI, CORS, taxas
+    ├── Program.cs                               só bootstrap: AddApplication(), AddApi() e o pipeline
+    └── SimuladorInvestimentos.Api.http          requisições de exemplo (200 e 400)
+
+tests/
+├── SimuladorInvestimentos.Domain.Tests/         objetos de valor, política de IR, calculadora; Support/FixedCdbRatesProvider
+└── SimuladorInvestimentos.Application.Tests/    caso de uso e CalculateCdbResponse.From; cópia própria do fake
+```
+
+Convenções que sustentam essa árvore:
+
+- **Regra de dependência:** `Api → Application → Domain`. Exceções nascem no `Domain`; quem
+  as traduz para HTTP é a `Api` (`ExceptionHandling/`). `Application` não referencia
+  ASP.NET nem `IConfiguration`.
+- **Um caso de uso, uma pasta:** `UseCases/<Recurso>/<Nome>/` com `<Nome>Request`,
+  `<Nome>Response`, `I<Nome>UseCase` (contrato que o endpoint consome) e `<Nome>UseCase`
+  (implementação). O mapeamento domínio → `Response` é um método estático no `Response`.
+  Não há validator nem mapper por caso de uso: a validação de entrada já acontece nos
+  objetos de valor do domínio.
+- **`Commands/` e `Queries/`** só entram quando um recurso tiver os dois tipos de operação.
+- **`Api/Endpoints/`** recebe um arquivo por recurso (`CdbEndpoints.cs`) com
+  `MapGroup("/api/v1/cdb")`.
+- **`Api/Adapters/`** recebe as implementações das portas do domínio
+  (`ConfigurationCdbRatesProvider`, `CdbRatesOptions`). Vira um projeto `Infrastructure`
+  quando houver um segundo adapter com peso próprio.
+- **`Api/ExceptionHandling/`** é o lugar dos `IExceptionHandler`.
+
+### Como adicionar um novo título
+
+Um título novo (LCI, LCA, Tesouro Direto) entra como pasta irmã em três lugares,
+reaproveitando `Domain/Common/`:
+
+1. `Domain/<Titulo>/` — `ValueObjects/`, `Services/` e `Ports/` do produto;
+2. `Application/UseCases/<Titulo>/<Nome>/` — o kit do caso de uso (Request, Response,
+   interface e implementação);
+3. `Api/Endpoints/<Titulo>Endpoints.cs` — `MapGroup("/api/v1/<titulo>")`.
+
+Nada em `Domain/Common/` ou em `Domain/Cdb/` precisa mudar.
+
+### Diagrama de classes (domínio, aplicação e Api)
 
 ```mermaid
 classDiagram
@@ -175,20 +303,33 @@ classDiagram
     }
 
     class CompoundCdbCalculator {
-        <<a implementar>>
+        <<service>>
         +Calculate(InvestmentAmount, InvestmentTerm) CdbCalculation
     }
     class RegressiveIncomeTaxPolicy {
-        <<a implementar>>
+        <<policy>>
         +GetRate(InvestmentTerm) decimal
     }
     class ConfigurationCdbRatesProvider {
-        <<a implementar>>
+        <<adapter>>
         +GetCurrent() CdbRates
+    }
+    class CdbRatesOptions {
+        <<options>>
+        +decimal MonthlyCdi
+        +decimal BankRate
+    }
+    class CdbEndpoints {
+        <<endpoint>>
+        +MapCdbEndpoints(IEndpointRouteBuilder) IEndpointRouteBuilder
     }
 
     class ICalculateCdbUseCase {
         <<interface>>
+        +Execute(CalculateCdbRequest) CalculateCdbResponse
+    }
+    class CalculateCdbUseCase {
+        <<use case>>
         +Execute(CalculateCdbRequest) CalculateCdbResponse
     }
     class CalculateCdbRequest {
@@ -202,11 +343,13 @@ classDiagram
         +decimal NetAmount
         +decimal IncomeTaxRate
         +decimal IncomeTaxAmount
+        +From(CdbCalculation)$ CalculateCdbResponse
     }
 
     ICdbCalculator <|.. CompoundCdbCalculator
     IIncomeTaxPolicy <|.. RegressiveIncomeTaxPolicy
     ICdbRatesProvider <|.. ConfigurationCdbRatesProvider
+    ICalculateCdbUseCase <|.. CalculateCdbUseCase
 
     CompoundCdbCalculator --> IIncomeTaxPolicy : politica de IR
     CompoundCdbCalculator --> ICdbRatesProvider : taxas vigentes
@@ -216,7 +359,10 @@ classDiagram
     ICdbRatesProvider ..> CdbRates : fornece
     ICalculateCdbUseCase ..> CalculateCdbRequest : recebe
     ICalculateCdbUseCase ..> CalculateCdbResponse : devolve
-    ICalculateCdbUseCase ..> ICdbCalculator : delega
+    CalculateCdbUseCase --> ICdbCalculator : delega
+    CalculateCdbResponse ..> CdbCalculation : arredonda
+    ConfigurationCdbRatesProvider --> CdbRatesOptions : le appsettings
+    CdbEndpoints --> ICalculateCdbUseCase : POST /api/v1/cdb/calculations
     InvestmentAmount ..> DomainException : lanca se invalido
     InvestmentTerm ..> DomainException : lanca se invalido
     CdbRates ..> DomainException : lanca se invalido
@@ -245,9 +391,7 @@ classDiagram
 
 ## Observações sobre esta versão
 
-- As versões de pacote em `Directory.Packages.props` (SonarAnalyzer, xUnit v3, Test SDK,
-  coverlet) e o SDK do `.esproj` (`Microsoft.VisualStudio.JavaScript.Sdk`) foram fixadas
-  sem acesso ao NuGet; se o `restore` reclamar de alguma, ajuste para a última versão
-  estável disponível no seu feed.
-- O `.gitignore` foi criado antes do primeiro build, de modo que nenhum artefato
-  (`bin/`, `obj/`, `.vs/`, `TestResults/`) entra no controle de versão.
+- As taxas (`CdbRates` em `appsettings.json`) e a tabela de IR são fixas. A tela exibe os
+  valores vigentes como texto informativo e não recalcula nada localmente.
+- Nenhum artefato de build (`bin/`, `obj/`, `.vs/`, `TestResults/`, `dist/`) entra no
+  controle de versão.

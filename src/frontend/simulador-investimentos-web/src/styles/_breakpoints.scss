@@ -1,0 +1,20 @@
+// Breakpoints de layout (mobile-first). Uso em componente:
+//   @use 'breakpoints' as bp;
+//   @include bp.from(tablet) { … }
+@use 'sass:map';
+
+$breakpoints: (
+  tablet: 600px,
+  desktop: 1024px,
+  wide: 1280px,
+);
+
+@mixin from($name) {
+  @if not map.has-key($breakpoints, $name) {
+    @error "Breakpoint desconhecido: `#{$name}`. Válidos: #{map.keys($breakpoints)}.";
+  }
+
+  @media (min-width: map.get($breakpoints, $name)) {
+    @content;
+  }
+}

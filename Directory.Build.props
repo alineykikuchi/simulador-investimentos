@@ -12,7 +12,7 @@
     <NeutralLanguage>pt-BR</NeutralLanguage>
   </PropertyGroup>
 
-  <!-- Critério de aceite: nenhum alerta de análise nativa do Visual Studio nem do Sonar.
+  <!-- Política de qualidade: nenhum alerta de análise nativa do Visual Studio nem do Sonar.
        Warnings são erros para que a esteira falhe antes da revisão. -->
   <PropertyGroup Condition="'$(MSBuildProjectExtension)' == '.csproj'">
     <EnableNETAnalyzers>true</EnableNETAnalyzers>

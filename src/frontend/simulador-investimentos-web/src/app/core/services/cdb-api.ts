@@ -10,7 +10,7 @@ import { CalculateCdbRequest, CalculateCdbResponse } from '../models/cdb-calcula
 @Injectable({ providedIn: 'root' })
 export class CdbApi {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = '/api/cdb';
+  private readonly baseUrl = '/api/v1/cdb';
 
   calculate(request: CalculateCdbRequest): Observable<CalculateCdbResponse> {
     return this.http.post<CalculateCdbResponse>(`${this.baseUrl}/calculations`, request);

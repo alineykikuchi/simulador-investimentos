@@ -1,14 +1,7 @@
-:root {
-  color-scheme: light dark;
-  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-}
+// Fontes auto-hospedadas: nenhuma requisição a terceiros em runtime.
+// Manrope: eixo wght (index.css). Fraunces: opsz.css traz wght + opsz 9..144.
+@use 'pkg:@fontsource-variable/manrope';
+@use 'pkg:@fontsource-variable/fraunces/opsz';
 
-body {
-  margin: 0;
-}
-
-main {
-  margin: 0 auto;
-  max-width: 48rem;
-  padding: 2rem 1rem;
-}
+@use 'tokens';
+@use 'base';

@@ -1,0 +1,46 @@
+<header class="header">
+  <h2 id="titulo-resultado" class="title">Resultado da simulação</h2>
+  <p class="summary">{{ result().initialAmount | currency }} por {{ result().months }} meses</p>
+</header>
+
+<div class="cards">
+  <article class="card">
+    <p class="card__eyebrow">Resultado bruto</p>
+    <p class="card__value">{{ result().grossAmount | currency }}</p>
+    <p class="card__caption">antes do imposto de renda</p>
+  </article>
+
+  <article class="card card--net">
+    <p class="card__eyebrow">Resultado líquido</p>
+    <p class="card__value">{{ result().netAmount | currency }}</p>
+    <p class="card__caption">é o que você recebe no resgate</p>
+  </article>
+</div>
+
+<dl class="breakdown">
+  <div class="row">
+    <dt>Valor investido</dt>
+    <dd>{{ result().initialAmount | currency }}</dd>
+  </div>
+  <div class="row">
+    <dt>{{ copy.effectiveRateLabel }}</dt>
+    <dd>{{ copy.effectiveRateValue }}</dd>
+  </div>
+  <div class="row">
+    <dt>Rendimento bruto</dt>
+    <dd class="gain">+ {{ result().grossYield | currency }}</dd>
+  </div>
+  <div class="row row--tax">
+    <dt>
+      Imposto de renda
+      <span class="chip">{{ result().incomeTaxRate | incomeTaxBracket }}</span>
+    </dt>
+    <dd class="tax">− {{ result().incomeTaxAmount | currency }}</dd>
+  </div>
+  <div class="row row--total">
+    <dt>Rendimento líquido</dt>
+    <dd class="gain">+ {{ result().netYield | currency }}</dd>
+  </div>
+</dl>
+
+<p class="footnote">{{ copy.footnote }}</p>

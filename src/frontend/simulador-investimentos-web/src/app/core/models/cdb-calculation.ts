@@ -1,4 +1,4 @@
-/** Contrato de entrada da Web API (POST /api/cdb/calculations). */
+/** Contrato de entrada da Web API (POST /api/v1/cdb/calculations). */
 export interface CalculateCdbRequest {
   /** Valor monetário positivo a ser aplicado. */
   initialAmount: number;
