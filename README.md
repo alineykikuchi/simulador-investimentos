@@ -122,6 +122,9 @@ para não deixar o `dotnet build` dependente do npm.
 
 ### Backend + cobertura
 
+Todos os comandos desta seção rodam na **raiz do repositório** (a pasta que contém
+`SimuladorInvestimentos.slnx`), não em `src/backend`.
+
 ```bash
 dotnet test SimuladorInvestimentos.slnx
 ```
@@ -130,12 +133,14 @@ Dois projetos de teste (xUnit v3), um por camada lógica:
 
 | Projeto                                   | Cobre                                                        | Testes |
 | ----------------------------------------- | ------------------------------------------------------------ | ------ |
-| `tests/SimuladorInvestimentos.Domain.Tests`      | objetos de valor, `RegressiveIncomeTaxPolicy`, `CompoundCdbCalculator` | 43 |
-| `tests/SimuladorInvestimentos.Application.Tests` | `CalculateCdbUseCase`, `CalculateCdbResponse.From` (arredondamento) | 17 |
+| `tests/SimuladorInvestimentos.Domain.Tests`      | objetos de valor, `RegressiveIncomeTaxPolicy`, `CompoundCdbCalculator` | 55 |
+| `tests/SimuladorInvestimentos.Application.Tests` | `CalculateCdbUseCase`, `CalculateCdbResponse.From` (arredondamento), `AddApplication()` | 19 |
 
-Os dois usam a mesma massa de referência (8 vetores de valor/prazo com os quatro campos
-esperados na resposta) e um fake próprio de `ICdbRatesProvider` em `Support/`, sem biblioteca
-de mock.
+O `Domain.Tests` valida a calculadora contra uma massa de referência (8 vetores de
+valor/prazo com os quatro campos esperados na resposta) usando um fake próprio de
+`ICdbRatesProvider` em `Support/`. O `Application.Tests` isola o caso de uso com um mock
+estrito de `ICdbCalculator` (Moq), sem repetir a fórmula, e cobre o registro de
+dependências.
 
 A cobertura é coletada automaticamente pelo `coverlet.msbuild`, configurado em
 `Directory.Build.targets` para todo projeto com `IsTestProject=true`. A medição fica
@@ -143,17 +148,43 @@ restrita a `SimuladorInvestimentos.Domain` e `SimuladorInvestimentos.Application
 **quality gate roda no próprio build**: abaixo de **90% de linhas** na camada lógica o
 `dotnet test` falha, sem depender de um servidor Sonar.
 
-Cobertura de linhas atual: **84,41%** no `Domain` e **75%** na `Application`. Os 60 testes
-passam, mas como os dois valores ficam abaixo do limiar, o `dotnet test` termina com erro de
-cobertura. O caso de uso e o mapeamento da resposta estão em 100%; o que falta cobrir é o
-registro de dependências (`AddApplication()`) e parte dos objetos de valor.
-O relatório `coverage.cobertura.xml` sai em `TestResults/<projeto de teste>/`. Para
-gerar o HTML:
+Cobertura de linhas atual: **94,8%** no `Domain` e **100%** na `Application`, com os 74
+testes passando e o gate verde. As únicas linhas sem cobertura no `Domain` são as quatro
+constantes `const decimal` de `RegressiveIncomeTaxPolicy`: o compilador as inicializa num
+construtor estático que o coverlet não consegue registrar, então não é lacuna de teste (os
+ramos de `GetRate` estão 100% cobertos). Subir o limiar para 100% faria o build falhar por
+esse motivo; para conferir o gate na prática, `dotnet test -p:Threshold=100` termina com
+`error : The total line coverage is below the specified 100`.
+
+O relatório `coverage.cobertura.xml` sai em `TestResults/<projeto de teste>/`, na raiz
+do repositório (o `Directory.Build.targets` fixa essa saída; não é a pasta `TestResults/`
+que o `dotnet test` cria dentro de cada projeto).
+
+Para ver o HTML, o atalho é o script da raiz, que roda os testes, gera o relatório e abre
+`coverage-report/index.html` no navegador padrão:
+
+```powershell
+# uma vez por máquina: instala o comando `reportgenerator`
+dotnet tool install --global dotnet-reportgenerator-globaltool
+
+# na raiz do repositório
+.\coverage.ps1           # testes + relatório + abre o navegador
+.\coverage.ps1 -NoOpen   # só gera o relatório (CI)
+```
+
+Se o PowerShell bloquear o script por política de execução:
+`powershell -ExecutionPolicy Bypass -File .\coverage.ps1`. O relatório é gerado mesmo quando
+o gate falha, e o código de saída do script é o do `dotnet test`.
+
+Os passos manuais equivalentes, também na raiz e depois de um `dotnet test`:
 
 ```bash
-dotnet tool install --global dotnet-reportgenerator-globaltool
 reportgenerator -reports:TestResults/**/coverage.cobertura.xml -targetdir:coverage-report -reporttypes:Html
 ```
+
+O padrão de `-reports` é relativo à pasta atual: rodado de outro lugar (por exemplo
+`src/backend`), o `reportgenerator` responde `found no matching files`. O resultado fica em
+`coverage-report/index.html`, pasta ignorada pelo git.
 
 Para uma rodada sem cobertura (mais rápida, sem o gate): `dotnet test /p:CollectCoverage=false`.
 
