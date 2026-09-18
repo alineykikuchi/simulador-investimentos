@@ -18,7 +18,7 @@ public sealed record CalculateCdbResponse(
 {
     /// <summary>
     /// Converte o resultado do domínio no contrato da API, arredondando dinheiro para centavos.
-    /// Regra D3: <c>GrossAmount</c> e <c>IncomeTaxAmount</c> são arredondados para
+    /// Regra de arredondamento: <c>GrossAmount</c> e <c>IncomeTaxAmount</c> são arredondados para
     /// <see cref="InvestmentAmount.Scale"/> casas com <see cref="MidpointRounding.AwayFromZero"/>
     /// (regra comercial brasileira) e <c>NetAmount</c> é derivado dos dois valores já
     /// arredondados, para que bruto − imposto = líquido feche na tela. Arredondar o líquido

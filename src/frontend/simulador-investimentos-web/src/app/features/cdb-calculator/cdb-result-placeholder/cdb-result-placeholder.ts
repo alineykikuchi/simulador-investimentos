@@ -7,7 +7,7 @@ interface PlaceholderCopy {
   readonly text: string;
 }
 
-/** Textos da spec §6.4. O estado vazio não diz "ao lado": em coluna única o formulário fica acima. */
+/** Textos dos estados sem resultado. O estado vazio não diz "ao lado": em coluna única o formulário fica acima. */
 const COPY: Record<CdbResultPlaceholderState, PlaceholderCopy> = {
   empty: {
     title: 'Nenhum cálculo ainda',
@@ -18,7 +18,7 @@ const COPY: Record<CdbResultPlaceholderState, PlaceholderCopy> = {
 };
 
 /**
- * Painel de resultado sem resultado (spec §5.9 e §6.4): a mesma moldura tracejada para os
+ * Painel de resultado sem resultado: a mesma moldura tracejada para os
  * estados vazio, carregando e erro; só mudam ícone, título e texto. `aria-live`/`aria-busy`
  * ficam na `section` do container, que aponta para `h2#titulo-resultado`.
  */

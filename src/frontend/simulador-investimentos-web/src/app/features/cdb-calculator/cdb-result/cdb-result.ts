@@ -6,7 +6,7 @@ import { CdbSimulationResult } from '../cdb-simulation-result';
 import { IncomeTaxBracketPipe } from '../income-tax-bracket-pipe';
 
 /**
- * Painel de resultado no estado de sucesso (spec §5.7 e §6.3). Só apresentação: recebe o
+ * Painel de resultado no estado de sucesso. Só apresentação: recebe o
  * resultado já calculado pela API por `input` e não conhece service nem HTTP.
  */
 @Component({

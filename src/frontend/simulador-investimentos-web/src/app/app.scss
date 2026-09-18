@@ -1,4 +1,4 @@
-// Shell da página (spec §6.1 e §7). Mobile-first: as media queries só acrescentam.
+// Shell da página. Mobile-first: as media queries só acrescentam.
 @use 'breakpoints' as bp;
 
 $container-max: 1280px;

@@ -2,8 +2,8 @@ import { formatPercent } from '@angular/common';
 import { inject, LOCALE_ID, Pipe, PipeTransform } from '@angular/core';
 
 /**
- * Rótulos das faixas da tabela regressiva (spec §5.8), indexados por `Math.round(rate * 1000)`
- * para evitar comparação de ponto flutuante. É só apresentação: a alíquota vem da API (D5).
+ * Rótulos das faixas da tabela regressiva, indexados por `Math.round(rate * 1000)`
+ * para evitar comparação de ponto flutuante. É só apresentação: a alíquota vem da API.
  */
 const BRACKET_LABELS: ReadonlyMap<number, string> = new Map([
   [225, 'até 6 meses · 22,5%'],

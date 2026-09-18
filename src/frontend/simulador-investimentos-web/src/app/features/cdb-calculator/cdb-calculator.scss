@@ -1,6 +1,6 @@
 @use 'breakpoints' as bp;
 
-// Grid da página (spec §7): 1 coluna no celular e no tablet; 2 colunas a partir de `desktop`,
+// Grid da página: 1 coluna no celular e no tablet; 2 colunas a partir de `desktop`,
 // com o formulário entre 380 e 460 px e o resultado ocupando o restante.
 :host {
   --form-column-min: 380px;

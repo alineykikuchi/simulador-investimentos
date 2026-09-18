@@ -1,16 +1,16 @@
-// Design tokens (spec §4.1–4.3). Única fonte de verdade para cor, tipografia, forma e espaço.
+// Design tokens. Única fonte de verdade para cor, tipografia, forma e espaço.
 // Estilos de componente consomem só `var(--…)`; nada de valor mágico repetido.
 :root {
-  // 4.1 Cores
+  // Cores
   --color-bg: #f4f3ee;
   --color-surface: #ffffff;
   --color-surface-header: #fbfaf7;
   --color-text: #16211e;
-  --color-text-muted: #4e5a55; // texto secundário, rótulos, nota de rodapé (D8)
+  --color-text-muted: #4e5a55; // texto secundário, rótulos, nota de rodapé
   --color-text-subtle: #6b7570; // texto de ajuda SOMENTE sobre branco
   --color-border: #dedcd3;
   --color-border-strong: #c9c6bd;
-  --color-border-input: #8a918c; // 3,23:1 sobre branco (D8)
+  --color-border-input: #8a918c; // 3,23:1 sobre branco
   --color-divider: #eceae3;
   --color-accent: #0f6b4a;
   --color-accent-hover: #0b5238;
@@ -19,11 +19,11 @@
   --color-danger: #b3321f;
   --color-icon-muted: #9aa39e;
 
-  // 4.2 Tipografia — famílias conforme declaradas pelos pacotes @fontsource-variable
+  // Tipografia — famílias conforme declaradas pelos pacotes @fontsource-variable
   --font-sans: 'Manrope Variable', Manrope, 'Segoe UI', system-ui, sans-serif;
   --font-serif: 'Fraunces Variable', Fraunces, Georgia, serif;
 
-  // 4.3 Forma
+  // Forma
   --radius-sm: 8px;
   --radius-md: 10px;
   --radius-lg: 16px;
@@ -31,7 +31,7 @@
   --control-height: 52px;
   --control-height-sm: 44px;
 
-  // 4.3 Espaço — escala do protótipo, nomeada pelo valor em px
+  // Espaço — escala nomeada pelo valor em px
   --space-4: 4px;
   --space-6: 6px;
   --space-8: 8px;

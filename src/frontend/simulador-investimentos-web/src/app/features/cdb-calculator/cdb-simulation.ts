@@ -16,7 +16,7 @@ type SimulationOutcome =
   | { readonly ok: false; readonly message: string };
 
 /**
- * Estado da simulação de CDB (spec D4). Guarda a última requisição, chama a API e expõe
+ * Estado da simulação de CDB. Guarda a última requisição, chama a API e expõe
  * `result`, `errorMessage` e `loading` como signals somente leitura.
  *
  * Provido pelo container da feature (`providers: [CdbSimulation]`), não na raiz.

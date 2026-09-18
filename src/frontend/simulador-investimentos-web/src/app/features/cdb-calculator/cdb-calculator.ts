@@ -20,7 +20,7 @@ const SINGLE_COLUMN_QUERY = '(max-width: 1023.98px)';
 const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)';
 
 /**
- * Container da tela (spec §5.3): provê `CdbSimulation`, monta o grid de duas colunas e liga
+ * Container da tela: provê `CdbSimulation`, monta o grid de duas colunas e liga
  * formulário ↔ simulação ↔ painel de resultado. Não tem estado próprio além do derivado.
  */
 @Component({

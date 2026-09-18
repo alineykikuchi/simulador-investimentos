@@ -7,7 +7,7 @@ import { CdbCalculator } from './cdb-calculator';
 
 const CALCULATIONS_URL = '/api/v1/cdb/calculations';
 
-/** Massa de 10.000 por 12 meses (spec §10). */
+/** Massa de 10.000 por 12 meses. */
 const RESPONSE: CalculateCdbResponse = {
   grossAmount: 11_230.82,
   netAmount: 10_984.66,

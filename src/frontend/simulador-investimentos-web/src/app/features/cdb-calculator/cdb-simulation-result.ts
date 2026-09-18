@@ -1,6 +1,6 @@
 /**
  * Resultado da simulação como exibido pela tela. Todos os valores vêm da API já
- * arredondados; o front não recalcula nada (spec D5).
+ * arredondados; o front não recalcula nada.
  */
 export interface CdbSimulationResult {
   initialAmount: number;

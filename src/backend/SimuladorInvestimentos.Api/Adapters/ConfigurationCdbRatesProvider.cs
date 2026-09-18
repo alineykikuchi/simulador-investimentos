@@ -16,7 +16,7 @@ internal sealed class ConfigurationCdbRatesProvider : ICdbRatesProvider
     {
         ArgumentNullException.ThrowIfNull(options);
 
-        // Valida ao subir: configuração inválida derruba o host com a mensagem do domínio (D5).
+        // Valida ao subir: configuração inválida derruba o host com a mensagem do domínio.
         var value = options.Value;
         _rates = CdbRates.Create(value.MonthlyCdi, value.BankRate);
     }

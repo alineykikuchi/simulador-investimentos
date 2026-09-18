@@ -12,7 +12,7 @@ import { CalculateCdbRequest } from '../../../core/models/cdb-calculation';
 import { BrlAmountInput } from '../brl-amount-input';
 import { FieldMessage } from '../field-message/field-message';
 
-/** Textos de ajuda e de erro por campo (spec §5.4). */
+/** Textos de ajuda e de erro por campo. */
 export const CDB_FORM_COPY = {
   initialAmount: {
     hint: 'Somente valores positivos.',

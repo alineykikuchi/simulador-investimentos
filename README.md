@@ -10,9 +10,8 @@ Solução única (`SimuladorInvestimentos.slnx`) com:
 
 Sem banco de dados nesta versão.
 
-> **Estado:** API de cálculo de CDB funcional (`POST /api/v1/cdb/calculations`); sem
-> persistência. O front já consome a rota versionada; a verificação final da tela ainda está
-> em andamento.
+> **Escopo desta versão:** cálculo de CDB pela API (`POST /api/v1/cdb/calculations`) e tela
+> que o consome; taxas fixas em configuração e sem persistência.
 
 ## Regras de negócio
 
@@ -133,14 +132,13 @@ de mock.
 A cobertura é coletada automaticamente pelo `coverlet.msbuild`, configurado em
 `Directory.Build.targets` para todo projeto com `IsTestProject=true`. A medição fica
 restrita a `SimuladorInvestimentos.Domain` e `SimuladorInvestimentos.Application`, e o
-**quality gate roda no próprio build**: abaixo de **90% de linhas** (critério de aceite:
-acima de 90% na camada lógica) o `dotnet test` falha, sem depender de um servidor Sonar.
+**quality gate roda no próprio build**: abaixo de **90% de linhas** na camada lógica o
+`dotnet test` falha, sem depender de um servidor Sonar.
 
-Cobertura de linhas medida hoje: **84,41%** no `Domain` (via `Domain.Tests`) e **69,56%** na
-`Application` (via `Application.Tests`); `CalculateCdbUseCase` e `From` estão em 100%, o que
-falta é `DependencyInjection.cs` (`AddApplication()`) e trechos do `Domain` medidos dentro do
-`Application.Tests`. Ou seja: **os 60 testes passam, mas o gate de 90% ainda falha** nos dois
-projetos até esses pontos serem cobertos ou o `Include` ser ajustado por projeto.
+Cobertura de linhas atual: **84,41%** no `Domain` e **75%** na `Application`. Os 60 testes
+passam, mas como os dois valores ficam abaixo do limiar, o `dotnet test` termina com erro de
+cobertura. O caso de uso e o mapeamento da resposta estão em 100%; o que falta cobrir é o
+registro de dependências (`AddApplication()`) e parte dos objetos de valor.
 O relatório `coverage.cobertura.xml` sai em `TestResults/<projeto de teste>/`. Para
 gerar o HTML:
 
@@ -151,13 +149,17 @@ reportgenerator -reports:TestResults/**/coverage.cobertura.xml -targetdir:covera
 
 Para uma rodada sem cobertura (mais rápida, sem o gate): `dotnet test /p:CollectCoverage=false`.
 
-### Frontend (stretch)
+### Frontend
 
 ```bash
 cd src/frontend/simulador-investimentos-web
-npm run test:ci        # Vitest, uma execução
+npm run test:ci         # Vitest, uma execução (82 specs em 10 arquivos)
 npm run test:coverage   # com relatório de cobertura
+npm run e2e             # Playwright; sobe o ng serve se a porta 4200 estiver livre
 ```
+
+Estrutura do front e detalhes dos testes E2E em
+`src/frontend/simulador-investimentos-web/README.md`.
 
 ## Arquitetura
 
@@ -389,9 +391,7 @@ classDiagram
 
 ## Observações sobre esta versão
 
-- As versões de pacote em `Directory.Packages.props` (SonarAnalyzer, xUnit v3, Test SDK,
-  coverlet) e o SDK do `.esproj` (`Microsoft.VisualStudio.JavaScript.Sdk`) foram fixadas
-  sem acesso ao NuGet; se o `restore` reclamar de alguma, ajuste para a última versão
-  estável disponível no seu feed.
-- O `.gitignore` foi criado antes do primeiro build, de modo que nenhum artefato
-  (`bin/`, `obj/`, `.vs/`, `TestResults/`) entra no controle de versão.
+- As taxas (`CdbRates` em `appsettings.json`) e a tabela de IR são fixas. A tela exibe os
+  valores vigentes como texto informativo e não recalcula nada localmente.
+- Nenhum artefato de build (`bin/`, `obj/`, `.vs/`, `TestResults/`, `dist/`) entra no
+  controle de versão.

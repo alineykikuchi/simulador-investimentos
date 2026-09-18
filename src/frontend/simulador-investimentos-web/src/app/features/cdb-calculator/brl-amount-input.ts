@@ -38,7 +38,7 @@ export function formatBrl(value: number | null): string {
 
 /**
  * `ControlValueAccessor` para valor monetário em `input type="text"`: a view mostra
- * `10.000,00` e o `FormControl` continua `number | null` (D7). Não valida nada — a validação
+ * `10.000,00` e o `FormControl` continua `number | null`. Não valida nada — a validação
  * de formato é do formulário.
  */
 @Directive({
