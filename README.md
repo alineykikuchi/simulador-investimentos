@@ -158,13 +158,27 @@ esse motivo; para conferir o gate na prática, `dotnet test -p:Threshold=100` te
 
 O relatório `coverage.cobertura.xml` sai em `TestResults/<projeto de teste>/`, na raiz
 do repositório (o `Directory.Build.targets` fixa essa saída; não é a pasta `TestResults/`
-que o `dotnet test` cria dentro de cada projeto). Para gerar o HTML, ainda na raiz:
+que o `dotnet test` cria dentro de cada projeto).
 
-```bash
+Para ver o HTML, o atalho é o script da raiz, que roda os testes, gera o relatório e abre
+`coverage-report/index.html` no navegador padrão:
+
+```powershell
 # uma vez por máquina: instala o comando `reportgenerator`
 dotnet tool install --global dotnet-reportgenerator-globaltool
 
-# na raiz do repositório, depois de um `dotnet test`
+# na raiz do repositório
+.\coverage.ps1           # testes + relatório + abre o navegador
+.\coverage.ps1 -NoOpen   # só gera o relatório (CI)
+```
+
+Se o PowerShell bloquear o script por política de execução:
+`powershell -ExecutionPolicy Bypass -File .\coverage.ps1`. O relatório é gerado mesmo quando
+o gate falha, e o código de saída do script é o do `dotnet test`.
+
+Os passos manuais equivalentes, também na raiz e depois de um `dotnet test`:
+
+```bash
 reportgenerator -reports:TestResults/**/coverage.cobertura.xml -targetdir:coverage-report -reporttypes:Html
 ```
 
