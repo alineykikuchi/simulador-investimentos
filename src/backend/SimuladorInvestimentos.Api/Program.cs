@@ -1,4 +1,5 @@
 using SimuladorInvestimentos.Api;
+using SimuladorInvestimentos.Api.Endpoints;
 using SimuladorInvestimentos.Application;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -18,5 +19,6 @@ if (app.Environment.IsDevelopment())
 }
 
 app.MapHealthChecks("/health");
+app.MapCdbEndpoints();
 
 await app.RunAsync().ConfigureAwait(false);

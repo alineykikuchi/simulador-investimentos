@@ -1,0 +1,19 @@
+@host = http://localhost:5080
+
+### Cálculo válido (esperado 200: grossAmount 11230.82, netAmount 10984.66)
+POST {{host}}/api/v1/cdb/calculations
+Content-Type: application/json
+
+{ "initialAmount": 10000, "months": 12 }
+
+### Prazo inválido (esperado 400, detail "O prazo de resgate deve ser maior que 1 mês.")
+POST {{host}}/api/v1/cdb/calculations
+Content-Type: application/json
+
+{ "initialAmount": 10000, "months": 1 }
+
+### Valor com mais de duas casas decimais (esperado 400, detail com "duas casas decimais")
+POST {{host}}/api/v1/cdb/calculations
+Content-Type: application/json
+
+{ "initialAmount": 10.001, "months": 12 }

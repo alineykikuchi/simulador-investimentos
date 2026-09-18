@@ -35,6 +35,10 @@ public static class DependencyInjection
         services.AddOpenApi();
         services.AddHealthChecks();
 
+        // Em Development o ASP.NET liga ThrowOnBadRequest e o erro de binding viraria 500 via
+        // ExceptionHandlerMiddleware; desligado, o binding responde 400 em qualquer ambiente (D9).
+        services.Configure<RouteHandlerOptions>(options => options.ThrowOnBadRequest = false);
+
         var allowedOrigins = configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
         services.AddCors(options => options.AddPolicy(
             FrontendCorsPolicy,
