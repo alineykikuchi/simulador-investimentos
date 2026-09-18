@@ -97,18 +97,26 @@ Tela em `http://localhost:4200`. O `proxy.conf.json` encaminha `/api` para
 
 ### No Visual Studio
 
-Abra `SimuladorInvestimentos.slnx` e, na lista de inicialização da barra de ferramentas,
-escolha o perfil **API + Web** (vem de `SimuladorInvestimentos.slnLaunch.user`, versionado
-de propósito). F5 sobe a API com depurador e o dev-server do Angular sem depurador, e abre
-`http://localhost:4200` no navegador definido em `src/frontend/.../launch.json` (Edge por
-padrão; troque para "localhost (Chrome)" na lista de depuradores do `.esproj`).
+1. Abra `SimuladorInvestimentos.slnx`.
+2. Na lista de inicialização da barra de ferramentas, escolha o perfil **API + Web** (vem
+   de `SimuladorInvestimentos.slnLaunch.user`, versionado de propósito).
+3. Pressione **F5**. A API sobe com depurador em `http://localhost:5080` e o navegador abre
+   automaticamente em `http://localhost:4200` (Edge por padrão; troque para
+   "localhost (Chrome)" na lista de depuradores do `.esproj`).
+4. Em um terminal, suba o dev-server do Angular:
+
+   ```bash
+   cd src/frontend/simulador-investimentos-web
+   npm install
+   npm start
+   ```
+
+5. Quando o terminal mostrar o servidor em `http://localhost:4200`, recarregue a página no
+   navegador: o front carrega e já conversa com a API pelo `proxy.conf.json`.
 
 Para subir só um dos lados, defina `SimuladorInvestimentos.Api` ou o `.esproj` como projeto
 de inicialização. O build da solução **não** compila o front (`ShouldRunBuildScript=false`)
 para não deixar o `dotnet build` dependente do npm.
-
-Se aparecer *"Unable to launch the previously selected debugger"*, feche o VS, apague a
-pasta `.vs` na raiz (é cache local) e abra a solução de novo.
 
 ## Como testar
 
