@@ -89,7 +89,7 @@ malformado ou tipo errado também responde `400`, sem `detail`. As mesmas requis
 ```bash
 cd src/frontend/simulador-investimentos-web
 npm install
-npm start
+npm start            # ou: npm start -- --open  (abre o navegador automaticamente)
 ```
 
 Tela em `http://localhost:4200`. O `proxy.conf.json` encaminha `/api` para
@@ -108,7 +108,7 @@ Tela em `http://localhost:4200`. O `proxy.conf.json` encaminha `/api` para
    ```bash
    cd src/frontend/simulador-investimentos-web
    npm install
-   npm start
+   npm start            # ou: npm start -- --open  (abre o navegador automaticamente)
    ```
 
 5. Quando o terminal mostrar o servidor em `http://localhost:4200`, recarregue a página no
