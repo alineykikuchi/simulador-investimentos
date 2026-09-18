@@ -1,0 +1,156 @@
+// Cartão do formulário (spec §6.2). Só tokens; medidas locais viram custom properties.
+@use 'breakpoints' as bp;
+
+:host {
+  display: block;
+  // Espaço reservado ao prefixo "R$" e ao sufixo "meses" dentro do input.
+  --inset-prefix: 48px;
+  --inset-suffix: 84px;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-24);
+  padding: var(--space-20);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+
+  @include bp.from(tablet) {
+    padding: var(--space-32);
+  }
+}
+
+.intro {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.intro__title {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: clamp(1.5rem, 1.2rem + 1.5vw, 1.875rem);
+  font-weight: 500;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+}
+
+.intro__text {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--color-text-muted);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-24);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.field__label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.control {
+  position: relative;
+}
+
+.control__input {
+  width: 100%;
+  height: var(--control-height);
+  padding: 0 var(--space-16);
+  font: inherit;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-input);
+  border-radius: var(--radius-md);
+
+  &[aria-invalid='true'] {
+    border-color: var(--color-danger);
+  }
+}
+
+.control__input--amount {
+  padding-left: var(--inset-prefix);
+}
+
+.control__input--months {
+  padding-right: var(--inset-suffix);
+}
+
+.control__prefix,
+.control__suffix {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  font-weight: 600;
+  color: var(--color-text-muted);
+  pointer-events: none;
+}
+
+.control__prefix {
+  left: var(--space-16);
+  font-size: 1rem;
+}
+
+.control__suffix {
+  right: var(--space-16);
+  font-size: 0.875rem;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  padding-top: var(--space-4);
+}
+
+.button {
+  border: 0;
+  border-radius: var(--radius-md);
+  font: inherit;
+  cursor: pointer;
+}
+
+.button--primary {
+  height: var(--control-height);
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+
+  &:hover,
+  &:active {
+    background: var(--color-accent-hover);
+  }
+
+  &:disabled {
+    opacity: 0.7;
+    cursor: default;
+  }
+}
+
+.button--secondary {
+  height: var(--control-height-sm);
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+  font-weight: 600;
+
+  &:hover {
+    background: var(--color-divider);
+  }
+}

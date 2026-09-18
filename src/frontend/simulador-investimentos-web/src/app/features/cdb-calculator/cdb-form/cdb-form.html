@@ -1,0 +1,71 @@
+<section class="card" aria-labelledby="titulo-form">
+  <div class="intro">
+    <h1 id="titulo-form" class="intro__title">Quanto o seu dinheiro rende?</h1>
+    <p class="intro__text">
+      Informe o valor e o prazo para ver o resultado bruto e líquido da aplicação.
+    </p>
+  </div>
+
+  <form class="form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    @let amountError = errorFor('initialAmount');
+    <div class="field">
+      <label class="field__label" for="valor">Valor da aplicação (R$)</label>
+      <div class="control">
+        <span class="control__prefix" aria-hidden="true">R$</span>
+        <input
+          #amountInput
+          id="valor"
+          class="control__input control__input--amount"
+          type="text"
+          inputmode="decimal"
+          autocomplete="off"
+          placeholder="0,00"
+          appBrlAmount
+          formControlName="initialAmount"
+          aria-describedby="valor-mensagem"
+          [attr.aria-invalid]="amountError ? 'true' : null"
+        />
+      </div>
+      <app-field-message
+        messageId="valor-mensagem"
+        [hint]="copy.initialAmount.hint"
+        [error]="amountError"
+      />
+    </div>
+
+    @let monthsError = errorFor('months');
+    <div class="field">
+      <label class="field__label" for="prazo">Prazo para resgate (meses)</label>
+      <div class="control">
+        <input
+          #monthsInput
+          id="prazo"
+          class="control__input control__input--months"
+          type="number"
+          inputmode="numeric"
+          min="2"
+          step="1"
+          placeholder="12"
+          formControlName="months"
+          aria-describedby="prazo-mensagem"
+          [attr.aria-invalid]="monthsError ? 'true' : null"
+        />
+        <span class="control__suffix" aria-hidden="true">meses</span>
+      </div>
+      <app-field-message
+        messageId="prazo-mensagem"
+        [hint]="copy.months.hint"
+        [error]="monthsError"
+      />
+    </div>
+
+    <div class="actions">
+      <button class="button button--primary" type="submit" [disabled]="loading()">
+        {{ loading() ? 'Calculando…' : 'Calcular investimento' }}
+      </button>
+      <button class="button button--secondary" type="button" (click)="clear()">
+        Limpar campos
+      </button>
+    </div>
+  </form>
+</section>
