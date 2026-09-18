@@ -1,0 +1,23 @@
+<Project>
+
+  <!-- Cobertura da camada lógica com quality gate no próprio build (sem servidor Sonar).
+       Este arquivo é importado DEPOIS do corpo de cada .csproj, por isso já enxerga
+       IsTestProject (no Directory.Build.props a propriedade ainda não existe).
+
+       Meta de cobertura: acima de 90% na camada lógica. Cada projeto de teste mede só o
+       assembly que ele testa (`X.Tests` → `X`); a Api continua fora porque não tem projeto
+       de teste. Abaixo do limiar, `dotnet test` falha — é o equivalente local a um
+       Quality Gate "Coverage >= 90" do Sonar. -->
+  <PropertyGroup Condition="'$(IsTestProject)' == 'true'">
+    <CollectCoverage>true</CollectCoverage>
+    <CoverletOutputFormat>cobertura</CoverletOutputFormat>
+    <CoverletOutput>$(MSBuildThisFileDirectory)TestResults/$(MSBuildProjectName)/</CoverletOutput>
+    <Include>[$(MSBuildProjectName.Replace('.Tests', ''))]*</Include>
+    <ExcludeByAttribute>GeneratedCodeAttribute,CompilerGeneratedAttribute,ExcludeFromCodeCoverageAttribute</ExcludeByAttribute>
+    <SkipAutoProps>true</SkipAutoProps>
+    <Threshold>90</Threshold>
+    <ThresholdType>line</ThresholdType>
+    <ThresholdStat>total</ThresholdStat>
+  </PropertyGroup>
+
+</Project>
