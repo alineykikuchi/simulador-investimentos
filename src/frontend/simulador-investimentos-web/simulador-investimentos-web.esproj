@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.VisualStudio.JavaScript.Sdk/1.0.2752196">
 
   <PropertyGroup>
-    <!-- F5 no Visual Studio sobe o dev-server do Angular CLI (ng serve). -->
+    <!-- F5 no Visual Studio sobe o dev-server do Angular CLI; o navegador e a URL vêm do launch.json. -->
     <StartupCommand>npm start</StartupCommand>
     <JavaScriptTestRoot>src\</JavaScriptTestRoot>
     <JavaScriptTestFramework>Vitest</JavaScriptTestFramework>
