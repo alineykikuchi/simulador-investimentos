@@ -44,10 +44,8 @@ describe('CdbForm', () => {
   });
 
   it('deve mostrar as duas mensagens de erro, marcar aria-invalid e emitir invalidSubmit no envio vazio', () => {
-    const onSimulate = vi.fn();
-    const onInvalid = vi.fn();
-    component.simulate.subscribe(onSimulate);
-    component.invalidSubmit.subscribe(onInvalid);
+    const onSimulate = vi.spyOn(component.simulate, 'emit');
+    const onInvalid = vi.spyOn(component.invalidSubmit, 'emit');
 
     submitForm();
 
@@ -101,10 +99,8 @@ describe('CdbForm', () => {
   });
 
   it('deve emitir simulate com os números estreitados no envio válido', () => {
-    const onSimulate = vi.fn();
-    const onInvalid = vi.fn();
-    component.simulate.subscribe(onSimulate);
-    component.invalidSubmit.subscribe(onInvalid);
+    const onSimulate = vi.spyOn(component.simulate, 'emit');
+    const onInvalid = vi.spyOn(component.invalidSubmit, 'emit');
     fillValid();
 
     submitForm();
@@ -116,8 +112,7 @@ describe('CdbForm', () => {
   });
 
   it('deve limpar os campos, emitir cleared e devolver o foco ao valor', () => {
-    const onCleared = vi.fn();
-    component.cleared.subscribe(onCleared);
+    const onCleared = vi.spyOn(component.cleared, 'emit');
     fillValid();
     submitForm();
 
