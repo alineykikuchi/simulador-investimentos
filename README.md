@@ -66,6 +66,7 @@ dotnet run --project src/backend/SimuladorInvestimentos.Api --launch-profile htt
 - Health check: `http://localhost:5080/health`
 - Cálculo: `POST http://localhost:5080/api/v1/cdb/calculations`
 - Contrato OpenAPI (ambiente Development): `http://localhost:5080/openapi/v1.json`
+- Interface de referência da API (Scalar, ambiente Development): `http://localhost:5080/scalar`
 
 Exemplo de chamada (R$ 10.000 por 12 meses):
 

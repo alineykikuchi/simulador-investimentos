@@ -1,6 +1,7 @@
 using SimuladorInvestimentos.Api;
 using SimuladorInvestimentos.Api.Endpoints;
 using SimuladorInvestimentos.Application;
+using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,6 +17,7 @@ app.UseCors(SimuladorInvestimentos.Api.DependencyInjection.FrontendCorsPolicy);
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.MapScalarApiReference();
 }
 
 app.MapHealthChecks("/health");
