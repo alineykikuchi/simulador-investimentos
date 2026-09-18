@@ -1,10 +1,26 @@
-.calculator {
-  display: grid;
-  gap: 1rem;
-  max-width: 28rem;
+@use 'breakpoints' as bp;
 
-  form {
-    display: grid;
-    gap: 0.5rem;
+// Grid da página (spec §7): 1 coluna no celular e no tablet; 2 colunas a partir de `desktop`,
+// com o formulário entre 380 e 460 px e o resultado ocupando o restante.
+:host {
+  --form-column-min: 380px;
+  --form-column-max: 460px;
+
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-24);
+
+  @include bp.from(tablet) {
+    gap: var(--space-32);
   }
+
+  @include bp.from(desktop) {
+    grid-template-columns: minmax(var(--form-column-min), var(--form-column-max)) minmax(0, 1fr);
+    gap: var(--space-40);
+    align-items: start;
+  }
+}
+
+.result {
+  min-width: 0;
 }
