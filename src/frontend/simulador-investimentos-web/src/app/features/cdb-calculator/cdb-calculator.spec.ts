@@ -5,7 +5,7 @@ import { provideBrazilianLocale } from '../../core/i18n/locale';
 import { CalculateCdbResponse } from '../../core/models/cdb-calculation';
 import { CdbCalculator } from './cdb-calculator';
 
-const CALCULATIONS_URL = '/api/cdb/calculations';
+const CALCULATIONS_URL = '/api/v1/cdb/calculations';
 
 /** Massa de 10.000 por 12 meses (spec §10). */
 const RESPONSE: CalculateCdbResponse = {

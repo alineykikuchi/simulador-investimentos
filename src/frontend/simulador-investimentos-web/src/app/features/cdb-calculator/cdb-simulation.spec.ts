@@ -5,7 +5,7 @@ import { TestBed } from '@angular/core/testing';
 import { CalculateCdbRequest, CalculateCdbResponse } from '../../core/models/cdb-calculation';
 import { CdbSimulation, toErrorMessage } from './cdb-simulation';
 
-const CALCULATIONS_URL = '/api/cdb/calculations';
+const CALCULATIONS_URL = '/api/v1/cdb/calculations';
 
 const REQUEST: CalculateCdbRequest = { initialAmount: 10_000, months: 12 };
 
@@ -51,7 +51,7 @@ describe('CdbSimulation', () => {
     expect(simulation.loading()).toBe(false);
   });
 
-  it('deve fazer POST em /api/cdb/calculations com o corpo da requisição', () => {
+  it('deve fazer POST em /api/v1/cdb/calculations com o corpo da requisição', () => {
     simulation.simulate(REQUEST);
     TestBed.tick();
 
