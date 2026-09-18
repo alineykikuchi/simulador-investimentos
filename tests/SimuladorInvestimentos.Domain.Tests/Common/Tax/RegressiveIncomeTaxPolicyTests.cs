@@ -1,3 +1,4 @@
+using AwesomeAssertions;
 using SimuladorInvestimentos.Domain.Common.Tax;
 using SimuladorInvestimentos.Domain.Common.ValueObjects;
 using Xunit;
@@ -6,6 +7,8 @@ namespace SimuladorInvestimentos.Domain.Tests.Common.Tax;
 
 public sealed class RegressiveIncomeTaxPolicyTests
 {
+    private readonly RegressiveIncomeTaxPolicy _sut = new();
+
     [Theory]
     [InlineData(2, 0.225)]
     [InlineData(6, 0.225)]
@@ -15,21 +18,21 @@ public sealed class RegressiveIncomeTaxPolicyTests
     [InlineData(24, 0.175)]
     [InlineData(25, 0.15)]
     [InlineData(360, 0.15)]
-    public void GetRate_ComPrazoEmCadaFaixa_RetornaAliquotaDaTabela(int months, double expectedRate)
+    public void GetRate_TermInEachBracket_ReturnsTableRate(int months, double expected)
     {
-        var policy = new RegressiveIncomeTaxPolicy();
         var term = InvestmentTerm.Create(months);
 
-        var rate = policy.GetRate(term);
+        var rate = _sut.GetRate(term);
 
-        Assert.Equal((decimal)expectedRate, rate);
+        rate.Should().Be((decimal)expected);
     }
 
     [Fact]
-    public void GetRate_ComTermNulo_LancaArgumentNullException()
+    public void GetRate_NullTerm_ThrowsArgumentNullException()
     {
-        var policy = new RegressiveIncomeTaxPolicy();
+        var act = () => _sut.GetRate(null!);
 
-        Assert.Throws<ArgumentNullException>(() => policy.GetRate(null!));
+        act.Should().Throw<ArgumentNullException>()
+            .WithParameterName("term");
     }
 }

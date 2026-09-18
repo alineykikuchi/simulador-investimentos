@@ -1,3 +1,4 @@
+using AwesomeAssertions;
 using SimuladorInvestimentos.Domain.Common.Exceptions;
 using SimuladorInvestimentos.Domain.Common.ValueObjects;
 using Xunit;
@@ -10,21 +11,41 @@ public sealed class InvestmentTermTests
     [InlineData(2)]
     [InlineData(6)]
     [InlineData(360)]
-    public void Create_ComPrazoMaiorQueUmMes_MantemOPrazoInformado(int months)
+    public void Create_TermAboveOneMonth_KeepsMonths(int months)
     {
         var term = InvestmentTerm.Create(months);
 
-        Assert.Equal(months, term.Months);
+        term.Months.Should().Be(months);
     }
 
     [Theory]
     [InlineData(1)]
     [InlineData(0)]
     [InlineData(-3)]
-    public void Create_ComPrazoMenorOuIgualAUmMes_LancaDomainException(int months)
+    public void Create_TermOfOneMonthOrLess_ThrowsDomainException(int months)
     {
-        var exception = Assert.Throws<DomainException>(() => InvestmentTerm.Create(months));
+        var act = () => InvestmentTerm.Create(months);
 
-        Assert.Contains("maior que 1", exception.Message, StringComparison.Ordinal);
+        act.Should().Throw<DomainException>()
+            .WithMessage("O prazo de resgate deve ser maior que 1 mês.");
+    }
+
+    [Fact]
+    public void Equals_SameMonths_AreEqual()
+    {
+        var first = InvestmentTerm.Create(12);
+        var second = InvestmentTerm.Create(12);
+
+        first.Should().Be(second);
+    }
+
+    [Fact]
+    public void ToString_AnyTerm_FormatsMonthsSuffix()
+    {
+        var term = InvestmentTerm.Create(12);
+
+        var text = term.ToString();
+
+        text.Should().Be("12 meses");
     }
 }

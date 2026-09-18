@@ -1,4 +1,4 @@
-using SimuladorInvestimentos.Domain.Cdb.Ports;
+using AwesomeAssertions;
 using SimuladorInvestimentos.Domain.Cdb.Services;
 using SimuladorInvestimentos.Domain.Cdb.ValueObjects;
 using SimuladorInvestimentos.Domain.Common.Tax;
@@ -10,8 +10,14 @@ namespace SimuladorInvestimentos.Domain.Tests.Cdb.Services;
 
 public sealed class CompoundCdbCalculatorTests
 {
-    private const decimal MonthlyCdi = 0.009m;
-    private const decimal BankRate = 1.08m;
+    private readonly FixedCdbRatesProvider _ratesProvider;
+    private readonly CompoundCdbCalculator _sut;
+
+    public CompoundCdbCalculatorTests()
+    {
+        _ratesProvider = new FixedCdbRatesProvider(CdbRates.Create(0.009m, 1.08m));
+        _sut = new CompoundCdbCalculator(new RegressiveIncomeTaxPolicy(), _ratesProvider);
+    }
 
     [Theory]
     [InlineData(1000.00, 2, 0.225, 1019.53, 4.40)]
@@ -22,90 +28,87 @@ public sealed class CompoundCdbCalculatorTests
     [InlineData(2500.00, 24, 0.175, 3153.28, 114.32)]
     [InlineData(2500.00, 25, 0.15, 3183.93, 102.59)]
     [InlineData(123456.78, 36, 0.15, 174883.75, 7714.05)]
-    public void Calculate_ComMassaDeReferencia_RetornaValoresEsperados(
+    public void Calculate_ReferenceVectors_ReturnsExpectedValues(
         double initialAmount,
         int months,
         double incomeTaxRate,
         double grossAmount,
         double incomeTaxAmount)
     {
-        var calculator = CreateCalculator();
+        var amount = InvestmentAmount.Create((decimal)initialAmount);
+        var term = InvestmentTerm.Create(months);
 
-        var actual = calculator.Calculate(
-            InvestmentAmount.Create((decimal)initialAmount),
-            InvestmentTerm.Create(months));
+        var actual = _sut.Calculate(amount, term);
 
-        Assert.Equal((decimal)incomeTaxRate, actual.IncomeTaxRate);
-        Assert.Equal((decimal)grossAmount, decimal.Round(actual.GrossAmount, 2, MidpointRounding.AwayFromZero));
-        Assert.Equal((decimal)incomeTaxAmount, decimal.Round(actual.IncomeTaxAmount, 2, MidpointRounding.AwayFromZero));
-        Assert.Equal(actual.GrossAmount - actual.IncomeTaxAmount, actual.NetAmount);
+        actual.IncomeTaxRate.Should().Be((decimal)incomeTaxRate);
+        decimal.Round(actual.GrossAmount, 2, MidpointRounding.AwayFromZero).Should().Be((decimal)grossAmount);
+        decimal.Round(actual.IncomeTaxAmount, 2, MidpointRounding.AwayFromZero).Should().Be((decimal)incomeTaxAmount);
+        actual.NetAmount.Should().Be(actual.GrossAmount - actual.IncomeTaxAmount);
     }
 
     [Fact]
-    public void Calculate_ComDoisMeses_ComposeDuasVezes()
+    public void Calculate_TwoMonths_CompoundsTwice()
     {
-        var calculator = CreateCalculator();
         var expectedGross = 1000m * 1.00972m * 1.00972m;
 
-        var actual = calculator.Calculate(InvestmentAmount.Create(1000m), InvestmentTerm.Create(2));
+        var actual = _sut.Calculate(InvestmentAmount.Create(1000m), InvestmentTerm.Create(2));
 
-        Assert.Equal(expectedGross, actual.GrossAmount);
+        actual.GrossAmount.Should().Be(expectedGross);
     }
 
     [Fact]
-    public void Calculate_PreservaEntradaNoResultado()
+    public void Calculate_AnyInput_PreservesInputInResult()
     {
-        var calculator = CreateCalculator();
         var amount = InvestmentAmount.Create(2500m);
         var term = InvestmentTerm.Create(24);
 
-        var actual = calculator.Calculate(amount, term);
+        var actual = _sut.Calculate(amount, term);
 
-        Assert.Equal(amount.Value, actual.InitialAmount);
-        Assert.Equal(term.Months, actual.Months);
+        actual.InitialAmount.Should().Be(amount.Value);
+        actual.Months.Should().Be(term.Months);
     }
 
     [Fact]
-    public void Calculate_ChamaProviderUmaVez()
+    public void Calculate_AnyInput_ReadsRatesOnce()
     {
-        var provider = CreateProvider();
-        var calculator = new CompoundCdbCalculator(new RegressiveIncomeTaxPolicy(), provider);
+        _sut.Calculate(InvestmentAmount.Create(1000m), InvestmentTerm.Create(36));
 
-        calculator.Calculate(InvestmentAmount.Create(1000m), InvestmentTerm.Create(36));
-
-        Assert.Equal(1, provider.Calls);
+        _ratesProvider.Calls.Should().Be(1);
     }
 
     [Fact]
-    public void Calculate_ComAmountNulo_LancaArgumentNullException()
+    public void Calculate_NullAmount_ThrowsArgumentNullException()
     {
-        var calculator = CreateCalculator();
+        var act = () => _sut.Calculate(null!, InvestmentTerm.Create(2));
 
-        Assert.Throws<ArgumentNullException>(() => calculator.Calculate(null!, InvestmentTerm.Create(2)));
+        act.Should().Throw<ArgumentNullException>()
+            .WithParameterName("amount");
     }
 
     [Fact]
-    public void Calculate_ComTermNulo_LancaArgumentNullException()
+    public void Calculate_NullTerm_ThrowsArgumentNullException()
     {
-        var calculator = CreateCalculator();
+        var act = () => _sut.Calculate(InvestmentAmount.Create(1000m), null!);
 
-        Assert.Throws<ArgumentNullException>(() => calculator.Calculate(InvestmentAmount.Create(1000m), null!));
+        act.Should().Throw<ArgumentNullException>()
+            .WithParameterName("term");
     }
 
-    [Theory]
-    [InlineData(true, false)]
-    [InlineData(false, true)]
-    public void Construtor_ComDependenciaNula_LancaArgumentNullException(bool nullPolicy, bool nullProvider)
+    [Fact]
+    public void Constructor_NullTaxPolicy_ThrowsArgumentNullException()
     {
-        IIncomeTaxPolicy policy = nullPolicy ? null! : new RegressiveIncomeTaxPolicy();
-        ICdbRatesProvider provider = nullProvider ? null! : CreateProvider();
+        var act = () => new CompoundCdbCalculator(null!, _ratesProvider);
 
-        Assert.Throws<ArgumentNullException>(() => new CompoundCdbCalculator(policy, provider));
+        act.Should().Throw<ArgumentNullException>()
+            .WithParameterName("incomeTaxPolicy");
     }
 
-    private static FixedCdbRatesProvider CreateProvider() =>
-        new(CdbRates.Create(MonthlyCdi, BankRate));
+    [Fact]
+    public void Constructor_NullRatesProvider_ThrowsArgumentNullException()
+    {
+        var act = () => new CompoundCdbCalculator(new RegressiveIncomeTaxPolicy(), null!);
 
-    private static CompoundCdbCalculator CreateCalculator() =>
-        new(new RegressiveIncomeTaxPolicy(), CreateProvider());
+        act.Should().Throw<ArgumentNullException>()
+            .WithParameterName("ratesProvider");
+    }
 }
