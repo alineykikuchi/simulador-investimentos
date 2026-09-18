@@ -21,6 +21,7 @@
 
   <Folder Name="/tests/">
     <Project Path="tests/SimuladorInvestimentos.Domain.Tests/SimuladorInvestimentos.Domain.Tests.csproj" />
+    <Project Path="tests/SimuladorInvestimentos.Application.Tests/SimuladorInvestimentos.Application.Tests.csproj" />
   </Folder>
 
 </Solution>
