@@ -1,6 +1,6 @@
-using SimuladorInvestimentos.Domain.Common;
+using SimuladorInvestimentos.Domain.Common.Exceptions;
 
-namespace SimuladorInvestimentos.Domain.Cdb;
+namespace SimuladorInvestimentos.Domain.Common.ValueObjects;
 
 /// <summary>
 /// Prazo de resgate da aplicação, em meses. Objeto de valor: a especificação exige prazo maior que 1.

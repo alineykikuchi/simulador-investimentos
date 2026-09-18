@@ -1,6 +1,6 @@
-using SimuladorInvestimentos.Domain.Common;
+using SimuladorInvestimentos.Domain.Common.Exceptions;
 
-namespace SimuladorInvestimentos.Domain.Cdb;
+namespace SimuladorInvestimentos.Domain.Common.ValueObjects;
 
 /// <summary>
 /// Valor inicial da aplicação. Objeto de valor: só existe se for monetário e positivo.

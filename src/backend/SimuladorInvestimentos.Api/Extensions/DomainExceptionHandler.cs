@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
-using SimuladorInvestimentos.Domain.Common;
+using SimuladorInvestimentos.Domain.Common.Exceptions;
 
 namespace SimuladorInvestimentos.Api.Extensions;
 

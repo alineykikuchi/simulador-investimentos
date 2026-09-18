@@ -1,4 +1,4 @@
-namespace SimuladorInvestimentos.Domain.Cdb;
+namespace SimuladorInvestimentos.Domain.Cdb.ValueObjects;
 
 /// <summary>
 /// Resultado de um cálculo de CDB: o que o investimento rendeu (bruto), o imposto e o líquido.

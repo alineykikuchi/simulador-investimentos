@@ -1,4 +1,7 @@
-namespace SimuladorInvestimentos.Domain.Cdb;
+using SimuladorInvestimentos.Domain.Cdb.ValueObjects;
+using SimuladorInvestimentos.Domain.Common.ValueObjects;
+
+namespace SimuladorInvestimentos.Domain.Cdb.Services;
 
 /// <summary>
 /// Serviço de domínio que aplica a fórmula VF = VI x [1 + (CDI x TB)] mês a mês

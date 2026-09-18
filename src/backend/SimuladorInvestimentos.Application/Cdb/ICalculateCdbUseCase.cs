@@ -10,6 +10,6 @@ public interface ICalculateCdbUseCase
     /// Executa o cálculo.
     /// </summary>
     /// <param name="request">Dados informados pelo usuário.</param>
-    /// <exception cref="SimuladorInvestimentos.Domain.Common.DomainException">Quando a entrada viola uma regra de negócio.</exception>
+    /// <exception cref="SimuladorInvestimentos.Domain.Common.Exceptions.DomainException">Quando a entrada viola uma regra de negócio.</exception>
     CalculateCdbResponse Execute(CalculateCdbRequest request);
 }

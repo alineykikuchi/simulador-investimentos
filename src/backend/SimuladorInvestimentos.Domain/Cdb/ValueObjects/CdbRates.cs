@@ -1,6 +1,6 @@
-using SimuladorInvestimentos.Domain.Common;
+using SimuladorInvestimentos.Domain.Common.Exceptions;
 
-namespace SimuladorInvestimentos.Domain.Cdb;
+namespace SimuladorInvestimentos.Domain.Cdb.ValueObjects;
 
 /// <summary>
 /// Taxas usadas na fórmula VF = VI x [1 + (CDI x TB)]. Objeto de valor imutável.

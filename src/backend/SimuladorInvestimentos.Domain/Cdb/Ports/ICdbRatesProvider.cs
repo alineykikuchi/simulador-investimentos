@@ -1,4 +1,6 @@
-namespace SimuladorInvestimentos.Domain.Cdb;
+using SimuladorInvestimentos.Domain.Cdb.ValueObjects;
+
+namespace SimuladorInvestimentos.Domain.Cdb.Ports;
 
 /// <summary>
 /// Fornece as taxas vigentes (CDI e TB). Nesta versão os valores são fixos e vêm de configuração;

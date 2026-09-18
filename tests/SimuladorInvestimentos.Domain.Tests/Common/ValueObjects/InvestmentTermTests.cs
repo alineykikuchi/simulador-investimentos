@@ -1,8 +1,8 @@
-using SimuladorInvestimentos.Domain.Cdb;
-using SimuladorInvestimentos.Domain.Common;
+using SimuladorInvestimentos.Domain.Common.Exceptions;
+using SimuladorInvestimentos.Domain.Common.ValueObjects;
 using Xunit;
 
-namespace SimuladorInvestimentos.Domain.Tests.Cdb;
+namespace SimuladorInvestimentos.Domain.Tests.Common.ValueObjects;
 
 public sealed class InvestmentTermTests
 {

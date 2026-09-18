@@ -1,4 +1,4 @@
-namespace SimuladorInvestimentos.Domain.Common;
+namespace SimuladorInvestimentos.Domain.Common.Exceptions;
 
 /// <summary>
 /// Sinaliza a violação de uma invariante de domínio (regra de negócio), nunca uma falha técnica.
