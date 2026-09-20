@@ -13,6 +13,28 @@ Sem banco de dados nesta versão.
 > **Escopo desta versão:** cálculo de CDB pela API (`POST /api/v1/cdb/calculations`) e tela
 > que o consome; taxas fixas em configuração e sem persistência.
 
+## Sumário
+
+- [Regras de negócio](#regras-de-negócio)
+- [Pré-requisitos](#pré-requisitos)
+- [Como executar](#como-executar)
+  - [Backend (Web API)](#backend-web-api)
+  - [Frontend (Angular)](#frontend-angular)
+  - [No Visual Studio](#no-visual-studio)
+- [Testes automatizados e cobertura](#testes-automatizados-e-cobertura)
+  - [Backend](#backend)
+  - [Frontend](#frontend)
+- [Arquitetura](#arquitetura)
+  - [Estrutura de pastas](#estrutura-de-pastas)
+  - [Como adicionar um novo título](#como-adicionar-um-novo-título)
+  - [Como adicionar um novo tipo de rentabilidade](#como-adicionar-um-novo-tipo-de-rentabilidade)
+  - [Modelo de domínio](#modelo-de-domínio)
+  - [Diagrama de classes (domínio, aplicação e Api)](#diagrama-de-classes-domínio-aplicação-e-api)
+  - [Políticas e princípios SOLID](#políticas-e-princípios-solid)
+  - [Como o modelo pode evoluir](#como-o-modelo-pode-evoluir)
+- [Qualidade de código](#qualidade-de-código)
+- [Observações sobre esta versão](#observações-sobre-esta-versão)
+
 ## Regras de negócio
 
 Rendimento de cada mês (o resultado de um mês é o valor inicial do mês seguinte):
@@ -118,9 +140,9 @@ Para subir só um dos lados, defina `SimuladorInvestimentos.Api` ou o `.esproj` 
 de inicialização. O build da solução **não** compila o front (`ShouldRunBuildScript=false`)
 para não deixar o `dotnet build` dependente do npm.
 
-## Como testar
+## Testes automatizados e cobertura
 
-### Backend + cobertura
+### Backend
 
 Todos os comandos desta seção rodam na **raiz do repositório** (a pasta que contém
 `SimuladorInvestimentos.slnx`), não em `src/backend`.
