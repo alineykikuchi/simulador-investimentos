@@ -3,7 +3,7 @@ namespace SimuladorInvestimentos.Api.Adapters;
 /// <summary>
 /// Espelho da seção <c>CdbRates</c> do <c>appsettings.json</c>, preenchido por binding de
 /// configuração. Não valida nada: a validação é do domínio, feita por
-/// <c>CdbRates.Create</c> quando o provider é construído. Sem valor padrão de propósito:
+/// <c>PostFixedRemuneration.Create</c> quando o provider é construído. Sem valor padrão de propósito:
 /// zero é inválido e força a configuração a existir.
 /// </summary>
 public sealed class CdbRatesOptions

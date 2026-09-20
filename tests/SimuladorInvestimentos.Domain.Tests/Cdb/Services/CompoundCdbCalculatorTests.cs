@@ -1,6 +1,6 @@
 using AwesomeAssertions;
 using SimuladorInvestimentos.Domain.Cdb.Services;
-using SimuladorInvestimentos.Domain.Cdb.ValueObjects;
+using SimuladorInvestimentos.Domain.Common.Remuneration;
 using SimuladorInvestimentos.Domain.Common.Tax;
 using SimuladorInvestimentos.Domain.Common.ValueObjects;
 using SimuladorInvestimentos.Domain.Tests.Support;
@@ -10,13 +10,13 @@ namespace SimuladorInvestimentos.Domain.Tests.Cdb.Services;
 
 public sealed class CompoundCdbCalculatorTests
 {
-    private readonly FixedCdbRatesProvider _ratesProvider;
+    private readonly FixedCdbRemunerationProvider _remunerationProvider;
     private readonly CompoundCdbCalculator _sut;
 
     public CompoundCdbCalculatorTests()
     {
-        _ratesProvider = new FixedCdbRatesProvider(CdbRates.Create(0.009m, 1.08m));
-        _sut = new CompoundCdbCalculator(new RegressiveIncomeTaxPolicy(), _ratesProvider);
+        _remunerationProvider = new FixedCdbRemunerationProvider(PostFixedRemuneration.Create(0.009m, 1.08m));
+        _sut = new CompoundCdbCalculator(new RegressiveIncomeTaxPolicy(), _remunerationProvider);
     }
 
     [Theory]
@@ -69,11 +69,23 @@ public sealed class CompoundCdbCalculatorTests
     }
 
     [Fact]
-    public void Calculate_AnyInput_ReadsRatesOnce()
+    public void Calculate_AnyRemuneration_CompoundsItsMonthlyRate()
+    {
+        // 1% ao mês por 2 meses: 1000 x 1,01 x 1,01 = 1020,10 (calculado à mão).
+        var provider = new FixedCdbRemunerationProvider(new ConstantRemuneration(0.01m));
+        var sut = new CompoundCdbCalculator(new RegressiveIncomeTaxPolicy(), provider);
+
+        var actual = sut.Calculate(InvestmentAmount.Create(1000m), InvestmentTerm.Create(2));
+
+        actual.GrossAmount.Should().Be(1020.10m);
+    }
+
+    [Fact]
+    public void Calculate_AnyInput_ReadsRemunerationOnce()
     {
         _sut.Calculate(InvestmentAmount.Create(1000m), InvestmentTerm.Create(36));
 
-        _ratesProvider.Calls.Should().Be(1);
+        _remunerationProvider.Calls.Should().Be(1);
     }
 
     [Fact]
@@ -97,18 +109,18 @@ public sealed class CompoundCdbCalculatorTests
     [Fact]
     public void Constructor_NullTaxPolicy_ThrowsArgumentNullException()
     {
-        var act = () => new CompoundCdbCalculator(null!, _ratesProvider);
+        var act = () => new CompoundCdbCalculator(null!, _remunerationProvider);
 
         act.Should().Throw<ArgumentNullException>()
             .WithParameterName("incomeTaxPolicy");
     }
 
     [Fact]
-    public void Constructor_NullRatesProvider_ThrowsArgumentNullException()
+    public void Constructor_NullRemunerationProvider_ThrowsArgumentNullException()
     {
         var act = () => new CompoundCdbCalculator(new RegressiveIncomeTaxPolicy(), null!);
 
         act.Should().Throw<ArgumentNullException>()
-            .WithParameterName("ratesProvider");
+            .WithParameterName("remunerationProvider");
     }
 }

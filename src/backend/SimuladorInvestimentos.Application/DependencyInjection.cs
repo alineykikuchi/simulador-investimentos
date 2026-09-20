@@ -13,7 +13,7 @@ public static class DependencyInjection
     /// <summary>
     /// Registra, como singletons, o caso de uso <see cref="ICalculateCdbUseCase"/> e as
     /// implementações de domínio que ele consome (<see cref="IIncomeTaxPolicy"/> e
-    /// <see cref="ICdbCalculator"/>). A porta <see cref="Domain.Cdb.Ports.ICdbRatesProvider"/>
+    /// <see cref="ICdbCalculator"/>). A porta <see cref="Domain.Cdb.Ports.ICdbRemunerationProvider"/>
     /// é registrada pela camada de API, que é quem lê a configuração.
     /// </summary>
     /// <param name="services">Coleção de serviços do host.</param>

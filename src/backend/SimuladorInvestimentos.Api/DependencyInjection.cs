@@ -6,7 +6,7 @@ namespace SimuladorInvestimentos.Api;
 
 /// <summary>
 /// Registro dos serviços de transporte da API (ProblemDetails, tratamento de exceções,
-/// OpenAPI, health checks e CORS) e do adapter de taxas do CDB no contêiner de injeção
+/// OpenAPI, health checks e CORS) e do adapter de remuneração do CDB no contêiner de injeção
 /// de dependências.
 /// </summary>
 public static class DependencyInjection
@@ -18,9 +18,9 @@ public static class DependencyInjection
 
     /// <summary>
     /// Registra os serviços da camada de API: transporte (ProblemDetails, exception handler,
-    /// OpenAPI, health checks e CORS) e o provider de taxas do CDB, que faz o bind da seção
-    /// <c>CdbRates</c> em <see cref="CdbRatesOptions"/> e expõe <see cref="ICdbRatesProvider"/>
-    /// como singleton validado ao subir.
+    /// OpenAPI, health checks e CORS) e o provider de remuneração do CDB, que faz o bind da
+    /// seção <c>CdbRates</c> em <see cref="CdbRatesOptions"/> e expõe
+    /// <see cref="ICdbRemunerationProvider"/> como singleton validado ao subir.
     /// </summary>
     /// <param name="services">Coleção de serviços do host.</param>
     /// <param name="configuration">Configuração da aplicação (origem das origens permitidas no CORS).</param>
@@ -48,7 +48,7 @@ public static class DependencyInjection
                 .AllowAnyHeader()));
 
         services.AddOptions<CdbRatesOptions>().BindConfiguration(CdbRatesOptions.SectionName);
-        services.AddSingleton<ICdbRatesProvider, ConfigurationCdbRatesProvider>();
+        services.AddSingleton<ICdbRemunerationProvider, ConfigurationCdbRemunerationProvider>();
 
         return services;
     }
