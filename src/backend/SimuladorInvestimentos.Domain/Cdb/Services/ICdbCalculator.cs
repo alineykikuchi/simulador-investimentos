@@ -4,8 +4,8 @@ using SimuladorInvestimentos.Domain.Common.ValueObjects;
 namespace SimuladorInvestimentos.Domain.Cdb.Services;
 
 /// <summary>
-/// Serviço de domínio que aplica a fórmula VF = VI x [1 + (CDI x TB)] mês a mês
-/// e o imposto de renda sobre o rendimento.
+/// Serviço de domínio que aplica a fórmula VF = VI x [1 + taxa do mês] mês a mês (CDI x TB
+/// na remuneração pós-fixada) e o imposto de renda sobre o rendimento.
 /// </summary>
 public interface ICdbCalculator
 {

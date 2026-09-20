@@ -3,8 +3,10 @@
   <PropertyGroup>
     <!-- F5 no Visual Studio sobe o dev-server do Angular CLI; o navegador e a URL vêm do launch.json. -->
     <StartupCommand>npm start</StartupCommand>
-    <JavaScriptTestRoot>src\</JavaScriptTestRoot>
-    <JavaScriptTestFramework>Vitest</JavaScriptTestFramework>
+    <!-- Sem JavaScriptTestRoot/JavaScriptTestFramework de propósito: o Test Explorer do Visual
+         Studio rodaria os specs com o Vitest direto, sem o TestBed que o `ng test` inicializa, e
+         os 82 specs falhariam com "Need to call TestBed.initTestEnvironment". Os testes do front
+         rodam por `npm run test:ci`; o Test Explorer fica só com os projetos xUnit. -->
     <!-- O build da solução não empacota o front (use `npm run build` quando precisar do bundle). -->
     <ShouldRunBuildScript>false</ShouldRunBuildScript>
     <ShouldRunNpmInstall>true</ShouldRunNpmInstall>

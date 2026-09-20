@@ -133,12 +133,14 @@ Dois projetos de teste (xUnit v3), um por camada lógica:
 
 | Projeto                                   | Cobre                                                        | Testes |
 | ----------------------------------------- | ------------------------------------------------------------ | ------ |
-| `tests/SimuladorInvestimentos.Domain.Tests`      | objetos de valor, `RegressiveIncomeTaxPolicy`, `CompoundCdbCalculator` | 55 |
+| `tests/SimuladorInvestimentos.Domain.Tests`      | objetos de valor, `PostFixedRemuneration`, `RegressiveIncomeTaxPolicy`, `CompoundCdbCalculator` | 59 |
 | `tests/SimuladorInvestimentos.Application.Tests` | `CalculateCdbUseCase`, `CalculateCdbResponse.From` (arredondamento), `AddApplication()` | 19 |
 
 O `Domain.Tests` valida a calculadora contra uma massa de referência (8 vetores de
-valor/prazo com os quatro campos esperados na resposta) usando um fake próprio de
-`ICdbRatesProvider` em `Support/`. O `Application.Tests` isola o caso de uso com um mock
+valor/prazo com os quatro campos esperados na resposta) usando fakes próprios em
+`Support/`: `FixedCdbRemunerationProvider` (a porta) e `ConstantRemuneration` (uma
+`Remuneration` de taxa fixa qualquer, que prova que a calculadora não depende da
+pós-fixada). O `Application.Tests` isola o caso de uso com um mock
 estrito de `ICdbCalculator` (Moq), sem repetir a fórmula, e cobre o registro de
 dependências.
 
@@ -148,7 +150,7 @@ restrita a `SimuladorInvestimentos.Domain` e `SimuladorInvestimentos.Application
 **quality gate roda no próprio build**: abaixo de **90% de linhas** na camada lógica o
 `dotnet test` falha, sem depender de um servidor Sonar.
 
-Cobertura de linhas atual: **94,8%** no `Domain` e **100%** na `Application`, com os 74
+Cobertura de linhas atual: **94,9%** no `Domain` e **100%** na `Application`, com os 78
 testes passando e o gate verde. As únicas linhas sem cobertura no `Domain` são as quatro
 constantes `const decimal` de `RegressiveIncomeTaxPolicy`: o compilador as inicializa num
 construtor estático que o coverlet não consegue registrar, então não é lacuna de teste (os
@@ -216,7 +218,7 @@ SimuladorInvestimentos.Api  ──▶  SimuladorInvestimentos.Application  ─�
 
 | Camada                        | Responsabilidade                                                              |
 | ----------------------------- | ----------------------------------------------------------------------------- |
-| `Domain`                      | invariantes (valor positivo, prazo > 1 mês), fórmula do CDB e política de IR   |
+| `Domain`                      | invariantes (valor positivo, prazo > 1 mês), tipo de rentabilidade, fórmula do CDB e política de IR |
 | `Application`                 | orquestra o caso de uso e expõe o contrato da API (DTOs)                       |
 | `Api`                         | transporte: rotas, serialização, CORS, tradução de erro de domínio em HTTP 400 |
 | `simulador-investimentos-web` | apresentação: formulário, chamada HTTP e exibição do bruto/líquido             |
@@ -231,12 +233,13 @@ src/backend/
 ├── SimuladorInvestimentos.Domain/
 │   ├── Common/                                  vale para qualquer título de renda fixa
 │   │   ├── Exceptions/DomainException.cs
+│   │   ├── Remuneration/                        Remuneration (abstrata), PostFixedRemuneration (indexador x percentual)
 │   │   ├── Tax/                                 IIncomeTaxPolicy, RegressiveIncomeTaxPolicy (tabela regressiva)
 │   │   └── ValueObjects/                        InvestmentAmount, InvestmentTerm
 │   └── Cdb/                                     específico do CDB
-│       ├── Ports/ICdbRatesProvider.cs
+│       ├── Ports/ICdbRemunerationProvider.cs    remuneração vigente do CDB simulado
 │       ├── Services/                            ICdbCalculator, CompoundCdbCalculator (juros mês a mês + IR)
-│       └── ValueObjects/                        CdbRates, CdbCalculation
+│       └── ValueObjects/CdbCalculation.cs
 │
 ├── SimuladorInvestimentos.Application/
 │   ├── UseCases/
@@ -249,16 +252,16 @@ src/backend/
 │   └── DependencyInjection.cs                   AddApplication(): política, calculadora e caso de uso
 │
 └── SimuladorInvestimentos.Api/
-    ├── Adapters/                                CdbRatesOptions (bind de "CdbRates"), ConfigurationCdbRatesProvider
+    ├── Adapters/                                CdbRatesOptions (bind de "CdbRates"), ConfigurationCdbRemunerationProvider
     ├── Endpoints/CdbEndpoints.cs                MapGroup("/api/v1/cdb") + POST /calculations
     ├── ExceptionHandling/
     │   └── DomainExceptionHandler.cs            DomainException → HTTP 400 + ProblemDetails
-    ├── DependencyInjection.cs                   AddApi(configuration): ProblemDetails, OpenAPI, CORS, taxas
+    ├── DependencyInjection.cs                   AddApi(configuration): ProblemDetails, OpenAPI, CORS, remuneração
     ├── Program.cs                               só bootstrap: AddApplication(), AddApi() e o pipeline
     └── SimuladorInvestimentos.Api.http          requisições de exemplo (200 e 400)
 
 tests/
-├── SimuladorInvestimentos.Domain.Tests/         objetos de valor, política de IR, calculadora; Support/FixedCdbRatesProvider
+├── SimuladorInvestimentos.Domain.Tests/         objetos de valor, remuneração, política de IR, calculadora; Support/ com os fakes
 └── SimuladorInvestimentos.Application.Tests/    caso de uso e CalculateCdbResponse.From; cópia própria do fake
 ```
 
@@ -276,7 +279,7 @@ Convenções que sustentam essa árvore:
 - **`Api/Endpoints/`** recebe um arquivo por recurso (`CdbEndpoints.cs`) com
   `MapGroup("/api/v1/cdb")`.
 - **`Api/Adapters/`** recebe as implementações das portas do domínio
-  (`ConfigurationCdbRatesProvider`, `CdbRatesOptions`). Vira um projeto `Infrastructure`
+  (`ConfigurationCdbRemunerationProvider`, `CdbRatesOptions`). Vira um projeto `Infrastructure`
   quando houver um segundo adapter com peso próprio.
 - **`Api/ExceptionHandling/`** é o lugar dos `IExceptionHandler`.
 
@@ -291,6 +294,133 @@ reaproveitando `Domain/Common/`:
 3. `Api/Endpoints/<Titulo>Endpoints.cs` — `MapGroup("/api/v1/<titulo>")`.
 
 Nada em `Domain/Common/` ou em `Domain/Cdb/` precisa mudar.
+
+### Como adicionar um novo tipo de rentabilidade
+
+Prefixada, híbrida (IPCA + spread) ou qualquer outra forma de rendimento entra como um
+`sealed record` em `Domain/Common/Remuneration/` herdando `Remuneration` e respondendo a
+uma única pergunta: qual a taxa efetiva de um mês.
+
+```csharp
+public sealed record FixedRateRemuneration : Remuneration
+{
+    public decimal FixedMonthlyRate { get; }
+    public override decimal MonthlyRate => FixedMonthlyRate;
+    // Create(...) com as validações do tipo
+}
+```
+
+A calculadora não muda: ela compõe `MonthlyFactor` mês a mês sem saber qual subtipo está
+compondo. Quem decide a remuneração do CDB simulado é o adapter da Api
+(`ConfigurationCdbRemunerationProvider`, que hoje monta a `PostFixedRemuneration` a partir
+de `appsettings.json`). Se o tipo passar a ser escolhido na tela, é um campo novo em
+`CalculateCdbRequest` e a construção da `Remuneration` no caso de uso; o domínio continua
+igual.
+
+### Modelo de domínio
+
+Como o investimento, a sua forma de rendimento e o imposto se dividem entre classes, e por
+que cada coisa mora onde mora.
+
+```mermaid
+classDiagram
+    direction TB
+
+    class InvestmentAmount {
+        <<value object>>
+        +decimal Value
+        +Create(decimal)$ InvestmentAmount
+    }
+    class InvestmentTerm {
+        <<value object>>
+        +int Months
+        +Create(int)$ InvestmentTerm
+    }
+    class Remuneration {
+        <<abstract · value object>>
+        +decimal MonthlyRate*
+        +decimal MonthlyFactor
+    }
+    class PostFixedRemuneration {
+        <<value object>>
+        +decimal IndexMonthlyRate
+        +decimal Percentage
+        +decimal MonthlyRate
+        +Create(decimal, decimal)$ PostFixedRemuneration
+    }
+    class IIncomeTaxPolicy {
+        <<interface>>
+        +GetRate(InvestmentTerm) decimal
+    }
+    class ICdbRemunerationProvider {
+        <<interface · porta>>
+        +GetCurrent() Remuneration
+    }
+    class ICdbCalculator {
+        <<interface>>
+        +Calculate(InvestmentAmount, InvestmentTerm) CdbCalculation
+    }
+    class CdbCalculation {
+        <<value object>>
+        +decimal InitialAmount
+        +int Months
+        +decimal GrossAmount
+        +decimal IncomeTaxRate
+        +decimal IncomeTaxAmount
+        +decimal NetAmount
+    }
+
+    Remuneration <|-- PostFixedRemuneration
+    ICdbRemunerationProvider ..> Remuneration : fornece
+    ICdbCalculator ..> InvestmentAmount : recebe
+    ICdbCalculator ..> InvestmentTerm : recebe
+    ICdbCalculator ..> ICdbRemunerationProvider : consulta
+    ICdbCalculator ..> IIncomeTaxPolicy : consulta
+    ICdbCalculator ..> CdbCalculation : produz
+```
+
+Setas tracejadas são dependências de cálculo; a seta cheia é herança. Não há composição:
+nesta versão não existe uma entidade "CDB" que contenha esses objetos, porque não há
+persistência nem identidade a preservar. Valor, prazo e a remuneração configurada *são* o
+CDB.
+
+**`InvestmentAmount` e `InvestmentTerm`** (`Common/ValueObjects`) são as duas entradas da
+tela. São objetos de valor e não `decimal`/`int` soltos porque a invariante ("positivo com
+duas casas", "maior que 1 mês") vale em qualquer lugar do domínio que os receba, e a
+validação acontece uma vez, na construção. O prazo é em meses inteiros porque é assim que
+a fórmula da versão capitaliza; datas e dias úteis só entram quando o requisito mudar.
+
+**`Remuneration`** (`Common/Remuneration`) é a cláusula do contrato que diz como o dinheiro
+cresce. É abstrata e o tipo de rentabilidade é a própria classe: estados inválidos (uma
+prefixada com percentual de CDI, uma pós-fixada sem indexador) simplesmente não são
+construíveis, ao contrário de um enum acompanhado de campos anuláveis. Ela responde a uma
+única pergunta, `MonthlyRate`, porque sob o requisito atual (CDI é "o valor do último mês",
+um número fixo) todos os tipos conhecidos se reduzem a uma taxa mensal constante. A
+composição mês a mês, que é a regra do CDB ("os rendimentos de cada mês devem ser utilizados
+para calcular o mês seguinte"), fica com a calculadora, e por isso é feita uma vez só. Mora
+em `Common` porque pós-fixada, prefixada e híbrida são formas de rendimento de qualquer
+título de renda fixa, não só do CDB.
+
+**`PostFixedRemuneration`** é a única implementação hoje: `IndexMonthlyRate` é o CDI e
+`Percentage` é o TB da fórmula `VF = VI x [1 + (CDI x TB)]`. O percentual mora aqui e não no
+índice porque é cláusula do contrato: dois títulos atrelados ao mesmo CDI podem pagar
+percentuais diferentes.
+
+**`IIncomeTaxPolicy`** (`Common/Tax`) decide a alíquota pelo prazo. É interface porque a
+tabela regressiva é uma política possível entre outras (isenção para LCI/LCA, por exemplo),
+e trocar a política não deve tocar o cálculo.
+
+**`ICdbRemunerationProvider`** (`Cdb/Ports`) é a porta por onde a remuneração vigente entra
+no domínio. Existe para que o cálculo seja testável sem configuração e para que a `Remuneration`
+continue um objeto de valor puro: a calculadora recebe a remuneração pela porta, nunca a
+guarda como campo. É a única costura por onde uma fonte externa (API do CDI, banco) ou outro
+tipo de rentabilidade entra sem alterar o cálculo. Está em `Cdb/` porque responde "qual a
+remuneração *deste* produto".
+
+**`ICdbCalculator`** (`Cdb/Services`) orquestra: pede a remuneração à porta, compõe
+`MonthlyFactor` sobre o principal mês a mês, pede a alíquota à política, retém o imposto
+sobre o rendimento e devolve **`CdbCalculation`** com precisão cheia (bruto, alíquota,
+imposto e líquido). Quem arredonda é a camada de aplicação, na resposta.
 
 ### Diagrama de classes (domínio, aplicação e Api)
 
@@ -308,12 +438,17 @@ classDiagram
         +int Months
         +Create(int) InvestmentTerm
     }
-    class CdbRates {
+    class Remuneration {
+        <<abstract>>
+        +decimal MonthlyRate*
+        +decimal MonthlyFactor
+    }
+    class PostFixedRemuneration {
         <<value object>>
-        +decimal MonthlyCdi
-        +decimal BankRate
-        +decimal MonthlyYieldRate
-        +Create(decimal, decimal) CdbRates
+        +decimal IndexMonthlyRate
+        +decimal Percentage
+        +decimal MonthlyRate
+        +Create(decimal, decimal) PostFixedRemuneration
     }
     class CdbCalculation {
         <<value object>>
@@ -336,9 +471,9 @@ classDiagram
         <<interface>>
         +GetRate(InvestmentTerm) decimal
     }
-    class ICdbRatesProvider {
+    class ICdbRemunerationProvider {
         <<interface>>
-        +GetCurrent() CdbRates
+        +GetCurrent() Remuneration
     }
 
     class CompoundCdbCalculator {
@@ -349,9 +484,9 @@ classDiagram
         <<policy>>
         +GetRate(InvestmentTerm) decimal
     }
-    class ConfigurationCdbRatesProvider {
+    class ConfigurationCdbRemunerationProvider {
         <<adapter>>
-        +GetCurrent() CdbRates
+        +GetCurrent() Remuneration
     }
     class CdbRatesOptions {
         <<options>>
@@ -387,24 +522,26 @@ classDiagram
 
     ICdbCalculator <|.. CompoundCdbCalculator
     IIncomeTaxPolicy <|.. RegressiveIncomeTaxPolicy
-    ICdbRatesProvider <|.. ConfigurationCdbRatesProvider
+    ICdbRemunerationProvider <|.. ConfigurationCdbRemunerationProvider
+    Remuneration <|-- PostFixedRemuneration
     ICalculateCdbUseCase <|.. CalculateCdbUseCase
 
     CompoundCdbCalculator --> IIncomeTaxPolicy : politica de IR
-    CompoundCdbCalculator --> ICdbRatesProvider : taxas vigentes
+    CompoundCdbCalculator --> ICdbRemunerationProvider : remuneracao vigente
     ICdbCalculator ..> CdbCalculation : produz
     ICdbCalculator ..> InvestmentAmount : recebe
     ICdbCalculator ..> InvestmentTerm : recebe
-    ICdbRatesProvider ..> CdbRates : fornece
+    ICdbRemunerationProvider ..> Remuneration : fornece
     ICalculateCdbUseCase ..> CalculateCdbRequest : recebe
     ICalculateCdbUseCase ..> CalculateCdbResponse : devolve
     CalculateCdbUseCase --> ICdbCalculator : delega
     CalculateCdbResponse ..> CdbCalculation : arredonda
-    ConfigurationCdbRatesProvider --> CdbRatesOptions : le appsettings
+    ConfigurationCdbRemunerationProvider --> CdbRatesOptions : le appsettings
+    ConfigurationCdbRemunerationProvider ..> PostFixedRemuneration : constroi
     CdbEndpoints --> ICalculateCdbUseCase : POST /api/v1/cdb/calculations
     InvestmentAmount ..> DomainException : lanca se invalido
     InvestmentTerm ..> DomainException : lanca se invalido
-    CdbRates ..> DomainException : lanca se invalido
+    PostFixedRemuneration ..> DomainException : lanca se invalido
 ```
 
 ### Políticas e princípios SOLID
@@ -412,10 +549,103 @@ classDiagram
 | Princípio | Onde aparece                                                                            |
 | --------- | --------------------------------------------------------------------------------------- |
 | SRP       | cada classe tem um motivo para mudar: objeto de valor valida, política decide alíquota, calculadora compõe juros, caso de uso orquestra |
-| OCP       | nova tabela de IR ou nova fonte de CDI entra como nova implementação de `IIncomeTaxPolicy` / `ICdbRatesProvider`, sem alterar o cálculo |
+| OCP       | novo tipo de rentabilidade entra como subtipo de `Remuneration`; nova tabela de IR ou nova fonte de CDI entra como implementação de `IIncomeTaxPolicy` / `ICdbRemunerationProvider`; o cálculo não muda em nenhum dos casos |
 | LSP       | as implementações respeitam o contrato das interfaces (sem exigir estado extra ou lançar exceção não prevista) |
 | ISP       | interfaces de um método, separadas por intenção, em vez de um "serviço de CDB" genérico |
 | DIP       | domínio e aplicação dependem de abstrações; a API é o único lugar que conhece configuração e DI |
+
+### Como o modelo pode evoluir
+
+O modelo acima é o mínimo que o requisito desta versão pede. Ele foi desenhado olhando para
+um modelo maior, mapeado durante a análise e deixado de fora de propósito: abstração sem
+uso é custo, não preparo. O diagrama abaixo é o destino; cada peça tem o gatilho que
+justifica trazê-la.
+
+```mermaid
+classDiagram
+    class Cdb {
+        <<entidade · raiz do agregado>>
+        +Guid Id
+        +string Issuer
+        +decimal InvestmentAmount
+        +DateOnly InvestmentDate
+        +DateOnly MaturityDate
+        +Simulate(redemptionDate, series) CdbCalculation
+    }
+    class Remuneration {
+        <<abstract · value object>>
+        +CalculateFactor(period, series) decimal
+    }
+    class FixedRateRemuneration {
+        +decimal AnnualRate
+    }
+    class PostFixedRemuneration {
+        +Index Index
+        +decimal Percentage
+    }
+    class HybridRemuneration {
+        +Index Index
+        +decimal Percentage
+        +decimal AnnualRate
+    }
+    class Liquidity {
+        <<value object>>
+        +LiquidityType Type
+        +int GracePeriodDays
+        +AllowsRedemption(date) bool
+    }
+    class IIndexSeries {
+        <<interface>>
+        +ValueAt(index, date) decimal
+        +AccumulatedBetween(index, start, end) decimal
+    }
+    class IndexQuote {
+        <<entidade · linha da série>>
+        +Index Index
+        +DateOnly Date
+        +decimal Value
+    }
+    class ICalendar {
+        <<interface>>
+        +BusinessDaysBetween(start, end) int
+    }
+
+    Cdb --> Remuneration
+    Cdb --> Liquidity
+    Remuneration <|-- FixedRateRemuneration
+    Remuneration <|-- PostFixedRemuneration
+    Remuneration <|-- HybridRemuneration
+    Remuneration ..> IIndexSeries
+    Remuneration ..> ICalendar
+    IIndexSeries ..> IndexQuote
+```
+
+Linhas cheias são composição (o CDB contém esses objetos); tracejadas são dependências de
+cálculo, recebidas como parâmetro e nunca guardadas como campo. Os nomes estão em inglês
+para bater com o código; a análise original usa os termos em português (`Remuneracao`,
+`Liquidez`, `ISerieDeIndexadores`, `CotacaoIndexador`, `ICalendario`).
+
+O que já existe hoje é o eixo `Remuneration` com uma implementação. O que falta, e quando
+entra:
+
+| Peça | O que muda | Gatilho |
+| ---- | ---------- | ------- |
+| `FixedRateRemuneration`, `HybridRemuneration` | novos subtipos de `Remuneration`, cada um com as próprias validações | o cliente pedir outro tipo de rentabilidade; a calculadora não muda |
+| `Remuneration.MonthlyRate` → `CalculateFactor(period, series)` | a remuneração passa a devolver o fator do período inteiro e a ser dona de *como* capitaliza (CDI compõe por dia útil, IPCA por mês pró-rata) | o índice deixar de ser um valor fixo de configuração e virar série histórica |
+| `IIndexSeries` + `IndexQuote` | o CDI ganha data; passa a ser possível responder "quanto rendeu até ontem" em vez de "quanto renderia com o CDI parado" | o mesmo gatilho acima; substitui o `ICdbRemunerationProvider` de valor fixo por uma fonte com data |
+| `ICalendar` | o prazo deixa de ser meses inteiros e vira intervalo de datas contado em dias úteis (calendário ANBIMA, dado externo) | o contrato da API passar a receber datas em vez de `months` |
+| `Liquidity` | resgate antecipado passa a ser permitido ou negado por tipo (diária, carência, só no vencimento) | resgate antes do vencimento virar caso de uso; a marcação a mercado do prefixado resgatado antes é regra da `Remuneration`, não daqui |
+| `Cdb` como entidade (`Guid`, emissor, datas) | valor, prazo e remuneração passam a ser campos de um agregado com identidade e ciclo de vida | persistir aplicações ou comparar simulações salvas; sem banco, `InvestmentAmount` + `InvestmentTerm` + a remuneração configurada já são o CDB |
+| `Index` como value object | o índice carrega o próprio nome, como capitaliza e a defasagem de divulgação | existir mais de um índice (Selic, IPCA) no mesmo simulador |
+
+O que fica de fora mesmo depois disso: um campo `RemunerationType` no `Cdb` (o tipo é a
+classe; para filtro de tela vira propriedade calculada ou discriminador de persistência),
+o valor de mercado dentro do `Index` (valor é série temporal, e série tem data) e um campo
+de base de cálculo (base 252 é constante enquanto o escopo for renda fixa doméstica). Ao
+persistir com EF Core, a hierarquia de `Remuneration` não cabe em `ComplexProperty`; as
+saídas são owned entity com TPH ou separar modelo de domínio do modelo de persistência,
+guardando colunas achatadas e reconstituindo pelas fábricas no repositório — para um
+simulador, a segunda costuma custar menos.
 
 ## Qualidade de código
 
@@ -430,7 +660,8 @@ classDiagram
 
 ## Observações sobre esta versão
 
-- As taxas (`CdbRates` em `appsettings.json`) e a tabela de IR são fixas. A tela exibe os
+- A remuneração é pós-fixada com CDI e TB fixos (`CdbRates` em `appsettings.json`) e a
+  tabela de IR também é fixa. A tela exibe os
   valores vigentes como texto informativo e não recalcula nada localmente.
 - Nenhum artefato de build (`bin/`, `obj/`, `.vs/`, `TestResults/`, `dist/`) entra no
   controle de versão.

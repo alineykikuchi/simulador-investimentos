@@ -49,14 +49,14 @@ public sealed class DependencyInjectionTests
     }
 
     [Fact]
-    public void AddApplication_WithRatesProviderRegistered_ResolvesUseCase()
+    public void AddApplication_WithRemunerationProviderRegistered_ResolvesUseCase()
     {
-        // ICdbRatesProvider é registrado pela Api; sem ele o grafo não resolve.
-        var ratesProvider = new Mock<ICdbRatesProvider>();
+        // ICdbRemunerationProvider é registrado pela Api; sem ele o grafo não resolve.
+        var remunerationProvider = new Mock<ICdbRemunerationProvider>();
         var services = new ServiceCollection();
 
         using var provider = services
-            .AddSingleton(ratesProvider.Object)
+            .AddSingleton(remunerationProvider.Object)
             .AddApplication()
             .BuildServiceProvider();
 
